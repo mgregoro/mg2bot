@@ -1,0 +1,52 @@
+;;mg2bot plugin file;;
+dv:0.61
+v:0.01
+c:public,private,jabber
+n:learn
+s:learn _<key>+ as <value>
+p:11
+h:teaches the bot things!
+a:mikey g, mg2bot core
+t:autostart
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    if ($self eq "start" || $self eq "stop") {
+        untie(%learned);
+        tie(%learned, 'DB_File', "$mg2bot_dir/data/d.db");
+        return;
+    }
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    # take out the name if it starts with it, for "mg2bot, command" vs "+command"
+    my $name = $hdr->{n};
+    $arg =~ s/^$name //g;
+
+    my ($key, $value) = $arg =~ /^(.+?) as (.+)/;
+    my ($key_word) = $key =~ /([a-zA-Z\s]+)/;
+
+    if (exists($learned{$key})) {
+        $self->privmsg($reply_to, "I already know about $key.");
+    } else {
+        if (plugin_loaded($key_word)) {
+            $self->privmsg($reply_to, "It appears you have a plugin loaded named $key_word, this is kind of a bad idea.");
+        } else {
+            $learned{$key} = $value;
+            $self->privmsg($reply_to, "Okay, I'll remember $key ($key_word) from now on.");
+            untie %learned;
+            tie %learned, 'DB_File', "$mg2bot_dir/data/d.db";
+        }
+    }
+}

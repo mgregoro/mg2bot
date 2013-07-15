@@ -1,0 +1,18 @@
+;;mg2bot plugin file;;
+dv:0.22
+v:0.02-beta
+c:public
+s:state (alone)
+a:base mg2bot plugin
+h:just a little plugin that demonstrates maintaining state
+n:state
+{
+    my $self = shift;
+    my $event = shift;
+    if ($_[0] eq "init") {
+        delete $plugins_data{state_state};
+    } else {
+        ++$plugins_data{state_state};
+        $self->privmsg($event->to->[0], "you have called me $plugins_data{state_state} times");
+    }
+}

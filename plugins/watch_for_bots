@@ -1,0 +1,26 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:whoreply
+p:50
+n:watch_for_bots
+{
+    my ($self, $event) = @_;
+
+    my ($nick, $ident, $host, $mask);
+
+    if ($event->type eq "whoreply") {
+        my @args = $event->args;
+        ($nick, $ident, $host) = ($args[5], $args[2], $args[3]); 
+        $mask = "$nick!$ident\@$host";
+    } else {
+        ($nick, $ident, $host) = $event->from =~ /^([\w\^\|\]\[\_\`]+)\!([\w\^\|\]\[\_\`]+)@([\w\.\-\_]+)$/;
+        $mask = $event->from;
+    }
+    
+    if (my $rel = $bl->mask_to_rel($mask)) {
+        $bl->initiate($my_nick, $rel->{nick}, $mask, $host) if $rel->{initiate};
+    }
+
+    return undef;
+}

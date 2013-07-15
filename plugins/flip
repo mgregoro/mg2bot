@@ -1,0 +1,15 @@
+;;mg2bot plugin file;;
+dv:0.22
+v:0.02
+c:public,jabber
+n:flip
+{
+    my $self = shift;
+    my $event = shift;
+    my %flip = (
+            0   =>  'heads',
+            1   =>  'tails' );
+    my $rand = sprintf('%d', rand(2));
+
+    $self->privmsg($event->to->[0], "$flip{$rand}");
+}

@@ -1,0 +1,76 @@
+;;mg2bot plugin file;;
+dv:0.22
+v:0.10
+c:public,jabber
+n:typo
+{
+    my $self = shift;
+    my $event = shift;
+    my $args = shift;
+
+    my %shift_hash = (
+            1   =>  '`',
+            2   =>  '1',
+            3   =>  '2',
+            4   =>  '3',
+            5   =>  '4',
+            6   =>  '5',
+            7   =>  '6',
+            8   =>  '7',
+            9   =>  '8',
+            0   =>  '9',
+            '-' =>  '0',
+            '=' =>  '-',
+            w   =>  'q',
+            e   =>  'w',
+            r   =>  'e',
+            t   =>  'r',
+            y   =>  't',
+            u   =>  'y',
+            i   =>  'u',
+            o   =>  'i',
+            p   =>  'o',
+            '[' =>  'p',
+            ']' =>  '[',
+            "\\" => ']',
+            s   =>  'a',
+            d   =>  's',
+            f   =>  'd',
+            g   =>  'f',
+            h   =>  'g',
+            j   =>  'h',
+            k   =>  'j',
+            l   =>  'k',
+            ';' =>  'l',
+            "'" =>  ';',
+            x   =>  'z',
+            c   =>  'x',
+            v   =>  'c',
+            b   =>  'v',
+            n   =>  'b',
+            m   =>  'n',
+            ',' =>  'm',
+            '.' =>  ',',
+            '/' =>  '.');
+    my @chars = split(//, $args);
+    my $return; my $caps;
+    foreach my $char (@chars) {
+        if ($char eq "a") {
+            if ($caps == 0) {
+                $caps = 1;
+            } elsif ($caps == 1) {
+                $caps = 0;
+            }
+        }
+        if ($char eq " ") {
+            $return .= " ";
+        } else {
+            if ($caps) {
+                $return .= uc($shift_hash{$char});
+            } else {
+                $return .= $shift_hash{$char};
+            }
+        }
+    }
+    $self->privmsg($event->to->[0], $return);
+}

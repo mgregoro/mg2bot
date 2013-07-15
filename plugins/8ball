@@ -1,0 +1,26 @@
+;;mg2bot plugin file;;
+# $Id: 8ball 237 2007-07-28 01:28:17Z corrupt $
+dv:0.22
+v:0.02
+c:public,jabber
+n:8ball
+{
+    my $self = shift;
+    my $event = shift;
+    my @flip = (
+            'Not Likely',
+            'Perhaps',
+            'Most Definately',
+            'HAHAHAHA -- no.',
+            'It sounds possible',
+            'I\'ll let you think about that.',
+            'Fat chance!',
+            'Yes',
+            'No',
+            'I like you, I really do... but no.',
+            'Jesus H. Christmas - You\'re out of your mind!',
+            'That is exactly right',
+            'Maybe'             );
+
+    $self->privmsg($event->to->[0], @flip[sprintf('%d', rand($#flip))]);
+}

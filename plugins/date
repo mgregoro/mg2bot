@@ -1,0 +1,24 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:date
+{
+    my ($self, $event, $args) = @_;
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    use Date::Manip;
+    my $date = UnixDate(ParseDate($args), '%m/%d/%y %I:%M:%S%p %Z (%z)');
+    if ($date) {
+        $self->privmsg($reply_to, $date);
+    } else {
+   	$self->privmsg($reply_to, "Sorry, couldn't hack that.");
+    }
+
+}

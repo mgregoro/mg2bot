@@ -1,0 +1,56 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.20
+c:public
+n:tick
+a:tony c.
+r:Finance::YahooQuote
+{
+    my ($self, $event, $args) = @_;
+
+if ($args eq "") {
+	$self->privmsg($event->to->[0], "Please specify a Symbol");
+} else {
+	
+
+	use Finance::YahooQuote;
+
+	my @quote = getonequote $args;
+	
+	if (@quote[2] eq "0.00"){
+		$self->privmsg($event->to->[0], "Could not find a quote for $args");
+	} elsif (@quote[2] eq ""){
+		$self->privmsg($event->to->[0], "Something bad happened.");	
+	} else {
+		$self->privmsg($event->to->[0], "@quote[1] (@quote[0]) @quote[2]/@quote[5]  at @quote[3] @quote[4] (@quote[21])");	
+	}
+
+}
+
+}
+
+
+#    0 Symbol
+#    1 Company Name
+#    2 Last Price
+#    3 Last Trade Date
+#    4 Last Trade Time
+#    5 Change
+#    6 Percent Change
+#    7 Volume
+#    8 Average Daily Vol
+#    9 Bid
+#    10 Ask
+#    11 Previous Close
+#    12 Today's Open
+#    13 Day's Range
+#    14 52-Week Range
+#    15 Earnings per Share
+#    16 P/E Ratio
+#    17 Dividend Pay Date
+#    18 Dividend per Share
+#    19 Dividend Yield
+#    20 Market Capitalization
+#    21 Stock Exchange
+
+

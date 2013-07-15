@@ -1,0 +1,12 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:muptime
+{
+    my ($self, $event, $args) = @_;
+    
+	my $uptime = `uptime`;	
+	
+	$self->privmsg($event->{to}->[0], "$uptime");
+}

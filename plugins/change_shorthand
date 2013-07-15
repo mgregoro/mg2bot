@@ -1,0 +1,16 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:change_shorthand
+{
+    my ($self, $event, $args) = @_;
+    if (is_master($event->from)) {
+        if (length($args) == 1) {
+            $shorthand_char = "\\" . $args;
+            $self->privmsg($event->to->[0], "Shorthand character changed to $args.");
+        } else {
+            $self->privmsg($event->to->[0], "Shorthand character must be one character long.");
+        }
+    }
+}

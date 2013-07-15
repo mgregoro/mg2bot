@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+my $phrase;
+
+foreach $word (@ARGV) {
+    $phrase = $phrase . scramble_word($word) . " ";
+}
+
+print $phrase . "\n";
+
+sub scramble_word {
+    my $word = shift;
+    my @wa = split(//, $word);
+    my @picked;
+    my $count = @wa;
+    my $word;
+    while (scalar(@picked) < $count) {
+        my $pick = 0;
+        my $number = rand($count);
+        if ($number =~ /(\d+)\./) {
+            $number = $1;
+        }
+        foreach my $ele (@picked) {
+            $pick = 1 if $number == $ele;
+        }
+        next if $pick == 1;
+        $word = $word . $wa[$number];
+        push(@picked, $number);
+    }
+    return $word;
+}
+

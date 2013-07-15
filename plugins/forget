@@ -1,0 +1,53 @@
+;;mg2bot plugin file;;
+dv:0.61
+v:0.01
+c:public,private,jabber
+n:forget
+s:forget _<key>+
+p:11
+h:teaches the bot things!
+a:mikey g, mg2bot core
+t:autostart
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    if ($self eq "start" || $self eq "stop") {
+        untie(%learned);
+        tie(%learned, 'DB_File', "$mg2bot_dir/data/d.db");
+        return;
+    }
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    # take out the name if it starts with it, for "mg2bot, command" vs "+command"
+    my $name = $hdr->{n};
+    $arg =~ s/^$name //g;
+
+    my ($key) = $arg =~ /^(.+)/;
+    if (exists($learned{$key})) {
+        delete($learned{$key});
+        $self->privmsg($reply_to, "Hmm.. I used to remember $key.  Now I don't.  Weird.");
+        untie %learned;
+        tie %learned, 'DB_File', "$mg2bot_dir/data/d.db";
+    } elsif (exists($learned{"_$key"}) || exists($learned{"_$key+"}) || exists($learned{"$key+"})) {
+        delete($learned{"_$key"});
+        delete($learned{"$key+"});
+        delete($learned{"_$key+"});
+        $self->privmsg($reply_to, "Hmm.. I used to remember $key.  Now I don't.  Weird.");
+        untie %learned;
+        tie %learned, 'DB_File', "$mg2bot_dir/data/d.db";
+    } else {
+        $self->privmsg($reply_to, "I can't forget what I do not know.");
+    }
+}

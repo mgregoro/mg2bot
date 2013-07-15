@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<random_quote_config version="1.0" log_version="0.10">
+    <dsn>DBI:mysql:database=mg2irc;host=www.mg2.org;port=3306</dsn>
+    <username>mg2irc</username>
+    <password>fzGq*RXx</password>
+    <table>channel_log</table>
+</random_quote_config>

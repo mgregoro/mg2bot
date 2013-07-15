@@ -1,0 +1,24 @@
+;;mg2bot plugin file;;
+# $Id: nick 92 2004-03-31 11:08:31Z corrupt $
+dv:0.30
+v:0.10
+c:public,private
+n:nick
+{
+    my ($self, $event, $args) = @_;
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    if ($args =~ /^[\w\^\|\]\[\_\`]{1,9}$/) {
+        $my_nick = $args;
+        $self->nick($args);
+    } else {
+        $self->privmsg($reply_to, "$args not a proper nick. (This bot was written for EFNet)");
+    }
+
+}

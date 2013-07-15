@@ -1,0 +1,67 @@
+;;mg2bot plugin file;;
+dv:0.45
+v:0.10
+c:public,private,console,jabber
+n:status
+{
+    my ($self, $event, $args) = @_;
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+    my $num_learned = scalar(keys %learned);
+    my $num_registered = scalar(keys %$mg2_users);
+    my ($num_c, $num_u, $channel);
+    foreach my $key (keys %$channels) {
+        ++$num_c;
+        foreach my $user (keys %{$channels->{$key}}) {
+            next if ($user =~ /^\*/);
+            ++$num_u;
+        }
+    }
+    if ($num_c > 1) {
+        $channel = "channels";
+    } else {
+        $channel = "channel";
+    }
+    my $uptime = getHMS((time() - $start_time));
+
+
+    my $status = "$my_nick: running $uptime.  ";
+
+    if ($jabber && $jabber_name) {
+        $status .= "Connected to $jabber_server as $jabber_name.  ";
+        $status .= "$jabber->{event_count} jabber requests from " . scalar(keys(%{$jabber->{user_count}})) . " jabber users handled.   ";
+    }
+
+    # did we know any factoids?
+    if ($num_learned) {
+        $status .= "$num_learned factoids learned.  ";
+    }
+
+    # do we have any registered users?
+    if ($num_registered) {
+        $status .= "$num_registered registered users imported from user database.  ";
+    }
+
+    # are we in any channels?
+    if ($num_c) {
+        $status .= "I see $num_u users in $num_c $channel.  ";
+    }
+
+    # attabot status?
+    if (exists($plugins_data{attabot})) {
+        $thing = $plugins_data{attabot} > 1 ? "things" : "thing";
+        $status .= "I have done $plugins_data{attabot} $thing right.  ";
+    }
+
+    # botlink info
+    if ($bl->{_num_rels}) {
+        $status .= "$bl->{_authenticated} out of $bl->{_num_rels} botlink connections established.";
+    }
+
+    $self->privmsg($reply_to, $status);
+
+}

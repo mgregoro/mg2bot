@@ -1,0 +1,58 @@
+;;mg2bot plugin file;;
+dv:0.60
+v:0.11
+c:public,private
+n:ban_user
+{
+    # ALRIGHT! ban_user is a demo plugin.
+    # kthx.
+    my ($self, $event, $args) = @_;
+
+    # again, reply_to is used to handle both nicks and channels.
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # yay - just like the other one
+    my ($ban_channel, $ban_user, @reason) = split(/\s+/, $args);
+
+    # so we dont have to do this 100 times
+    $ban_user = lc($ban_user);
+    $ban_channel = lc($ban_channel);
+
+    # i hope this is self explanatory
+    unless (im_in_channel($ban_channel)) {
+        $self->privmsg($reply_to, "I'm not in channel $ban_channel");
+        return undef;
+    }
+
+    unless (exists($channels->{$ban_channel}->{$ban_user})) {
+        $self->privmsg($reply_to, "$ban_user is not in $ban_channel!");
+        return undef;
+    }
+
+    # this is the hostmask we'll be using
+    my $hostmask = $channels->{$ban_channel}->{$ban_user}->{mask};
+    
+
+    #$self->privmsg($reply_to, "$ban_user\'s mask is $hostmask. right?");
+    # this might be tricky.
+    # the mask usually looks like user!ident@host.domain.com and can contain
+    # some weird characters.. lets use a regex to extract this info
+    #my $hostmask = $event->from; # for clarity
+
+    # yipes. complicated regex..                         USER HERE             IDENT HERE        HOST  DOM
+    my ($user, $ident, $host, $domain) = $hostmask =~ /^([\w\^\|\]\[\_\`]+)\!([\~\w\^\|\]\[\_\`]+)@([\w\-]+)\.(.+)$/;
+
+    # let's make sure we're doing the right thing.
+
+    # ok .. we ARE doing the right thing.
+    #push(@{$mode_changes->{$ban_channel}}, ['+b', "*!$user@*.$domain"]);
+
+    # this should do it.
+    $self->mode($ban_channel, '+b', "*!$user\@*.$domain");
+    $self->kick($ban_channel, $user, join(' ', @reason)); # nah those are the same thing..
+}

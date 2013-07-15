@@ -1,0 +1,34 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,private,jabber
+n:dict
+{
+    my ($self, $event, $args) = @_;
+
+    my $reply_to;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+    
+    if ($args !~ /^\w+$/) {
+        $self->me($reply_to, "in his best sloth voice: MAW - YOU BEEN BAD!");
+        return;
+    }
+
+    my @res = `/usr/bin/dict -s exact -P - -d wn $args`;
+
+    if ($hdr->{_cc_} eq "jabber") {
+        $self->privmsg($reply_to, @res[0..16]);
+    } else {
+        for (@res[0..16]) {
+            chomp;
+            $self->privmsg($reply_to, $_);
+        }
+    }
+}

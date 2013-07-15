@@ -1,0 +1,14 @@
+;;mg2bot plugin file;;
+# $Id: catchall_priv 92 2004-03-31 11:08:31Z corrupt $
+dv:0.45
+v:0.10
+c:priv_last
+p:100
+n:catchall_priv
+{
+    my ($self, $event, $args) = @_;
+    
+    print "[msg " . $event->nick . "]: $args\n";
+    return 1;
+
+}

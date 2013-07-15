@@ -1,0 +1,46 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,private
+n:jumpchan
+{
+    my ($self, $event, $args) = @_;
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    if ($args =~ /\,/) {
+        $self->privmsg($reply_to, "Fuck you.");
+        return;
+    }
+
+    # bug fixer!
+    $args = lc($args);
+
+    if (is_master($event->from)) {
+        if ($args =~ /^#/) {
+            $self->privmsg($reply_to, "Parting $args.");
+            $self->part($args);
+
+			sleep 1;
+
+            $channels->{$args}->{'*autojoin'} = $c->{channel}->{$args}->{autojoin} ? $c->{channel}->{$args}->{autojoin} : 0;
+            $channels->{$args}->{'*greet'} = $c->{channel}->{$args}->{greet} ? $c->{channel}->{$args}->{greet} : 0;
+			$channels->{$args}->{'*op_users'} = $c->{channel}->{$args}->{op_users} ? $c->{channel}->{$args}->{op_users} : 0;
+            $channels->{$args}->{'*autokick'} = $c->{channel}->{$args}->{autokick} ? $c->{channel}->{$args}->{autokick} : 0;
+            $channels->{$args}->{'*masters'} = $c->{channel}->{$args}->{masters} ? $c->{channel}->{$args}->{masters} : [ undef];
+            $self->privmsg($reply_to, "Joining $args.");
+            print "[join]: Joining $args.\n";
+            $self->join($args);
+        } else {
+            $self->privmsg($reply_to, "Please use the regular channel format ie #channel.");
+        }
+    } else {
+        $self->privmsg($reply_to, "You aren't my master.");
+    }
+
+}

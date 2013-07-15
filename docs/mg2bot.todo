@@ -1,0 +1,52 @@
+
+* all that we didn't do below!
+* have unloadplugin take a class arguement and unload all plugins belonging to that class.
+
+----------------------------------
+For mg2bot-0.60:
+* multiple plugin directories 
+* configuration files for plugins
+* improved server awareness
+    - multiple servers configured
+    - knows when its connected
+    - knows when things split
+* improve log plugin to output multiple formats (config file)
+* plugin dependencies
+    - auto load plugins that loading plugins are dependant on
+    - detect if all perl modules are available
+    - organize "plugin packs" that are empty plugins with lists
+      of dependencies.  This creates one plugin which is many.
+* pack in Net::IRC (modified)
+* initial mg2 botlink implementation
+    - implement flexable event loop / scheduler
+    - implement authentication stages of botlink protocol
+* create AIM bot interface
+* authenticated users
+* adduser commands
+* user flags
+-----------------------------------
+
+channel management (top priority, but requires cleanup first)
+    - takeover protection * done
+    - channel inventory * done
+    - support for multiple channels
+    - batch mode changes
+
+'play' and 'be' commands.  initiate plugins.
+    - loadplugin should still load the plugins (contrary to previous idea)
+
+take scramble, googlize, and all of the public and private commands out of the
+public and private handlers, and put them into plugins.
+
+clean code up for initial v0.50 release
+
+Current Release 0.41.
+
+For release 0.42:
+Improved channel inventory (channel modes, user modes)
+
+For release 0.45:
+offline user database for bot owners who want to have their own users!
+multiple channel support for management
+XML configuration file
+

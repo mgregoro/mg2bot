@@ -1,0 +1,43 @@
+;;mg2bot plugin file;;
+# $Id: log 201 2005-02-24 22:21:23Z corrupt $
+dv:0.62
+v:1.0
+c:public,private,jabber
+n:stock_quote
+s:logs channels - no syntax - starts on load
+h:logs channels - no syntax - starts on load
+a:mikey g, gets you stock quotes by symbol
+al:q,stockquote
+{
+    my ($self, $event, $arg) = @_;
+
+    my $hdr = $_[$#_];
+
+    # we need at least one context in which we can find this plugin. (we actually don't)
+    my $pcontext = $hdr->{_cc_};
+
+    # we also need the name of this plugin. (we actually don't)
+    my $pname = $hdr->{n};
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    use Finance::Quote;
+    my $quote = Finance::Quote->new;
+    $quote->set_currency("USD");
+    $quote->require_labels(qw/price date high low volume/);
+
+    my $ticker = uc($arg);
+    my %data = $quote->fetch("usa", $ticker);
+
+    if (exists($data{$ticker, "price"})) {
+        $self->privmsg($reply_to, "[$ticker " . $data{$ticker , "isodate"} . " " . $data{$ticker , "time"} . "] " . 
+            "price: " . $data{$ticker , "price"} . " open: " . $data{$ticker , "open"} .
+            " hi: " . $data{$ticker , "high"} . " low: " . $data{$ticker , "low"});
+    }
+
+}

@@ -1,0 +1,38 @@
+;;mg2bot plugin file;;
+dv:0.22
+v:0.02
+c:public
+n:hal
+{
+    my $self = shift;
+    my $event = shift;
+    my $args = shift;
+
+    use MegaHAL;
+    
+    $plugins_data{megahal} = new MegaHAL('Path' =>  '/home/corrupt/megahal',
+                                         'AutoSave'  =>  1);
+    
+    my $hal_handler = sub {
+        my $self = shift;
+        my $event = shift;
+        my @args = $event->args;
+        my $msg = @args[0];
+        if ($msg =~ /^$my_nick,\s*([0-9a-zA-Z\<\>\-\=\_\#\?\!\.\s\'\"]+)$/) {
+            my $command = $1;
+            if ($command eq "return") {
+                $self->add_handler("public", \&on_public);
+                $self->privmsg($event->to->[0], "Control returned to mg2bot proper.");
+            } else {
+                $self->privmsg($event->to->[0], $plugins_data{megahal}->do_reply($command));
+            }
+        }
+    };
+
+    if ($args eq "become") {
+        $self->privmsg($event->to->[0], "Control passed to hal handler.");
+        $self->add_handler("public", $hal_handler);
+        return;
+    }
+    $self->privmsg($event->to->[0], $plugins_data{megahal}->do_reply($args));
+}

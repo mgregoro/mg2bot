@@ -1,0 +1,27 @@
+;;mg2bot plugin file;;
+dv:0.22
+v:0.02
+c:public,jabber,private
+n:is_word
+{
+    my ($self, $event, $args) = @_;
+
+    if (!$plugins_data{dict_words}) {
+        open(WORDS, "/usr/share/dict/words");
+        while (<WORDS>) {
+            chomp;
+            push (@{$plugins_data{dict_words}}, $_);
+        }
+        close(WORDS);
+    }
+    my $is_word;
+
+    foreach my $word (@{$plugins_data{dict_words}}) {
+        $is_word = 1 if $word =~ /^$args$/i;
+    }
+    if ($is_word) {
+        $self->privmsg($event->to->[0], "Yes $args is a real word.");
+    } else {
+        $self->privmsg($event->to->[0], "No $args isn't a real word, or is misspelled.");
+    }
+}

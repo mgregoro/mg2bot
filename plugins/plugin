@@ -1,0 +1,66 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,jabber
+h:plugin that lists plugin information
+a:base mg2bot plugin
+s:plugin <pluginname> help/author/syntax
+n:plugin
+{
+    my ($self, $event, $args) = @_;
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+    if ($args =~ /([\w\>\<]+)\s(\w+)/) {
+        my $plugin = $1;
+        my $command = $2;
+        if ($command eq "help") {
+            my $help = plugin_help($plugin);
+            if ($help) {
+                $self->privmsg($reply_to, $help);
+            } else {
+                $self->privmsg($reply_to, "Sorry, no help found for $plugin.\n");
+            }
+        } elsif ($command eq "syntax") {
+            my $syntax = plugin_syntax($plugin);
+            if ($syntax) {
+                $self->privmsg($reply_to, $syntax);
+            } else {
+                $self->privmsg($reply_to, "Sorry, no syntax found for $plugin.\n");
+            }
+        } elsif ($command eq "author") {
+            my $author = plugin_author($plugin);
+            if ($author) {
+                $self->privmsg($reply_to, $author);
+            } else {
+                $self->privmsg($reply_to, "Sorry, no author found for $plugin.\n");
+            }
+        } elsif ($command eq "aliases") {
+            if (my $plugin_info = get_plugin('_internal_', $plugin)) {
+                my @aliases = split(/\s*,\s*/, $plugin_info->[1]->{al});
+                my $plugin_name = $plugin_info->[1]->{n};
+
+                my $is_alias;
+                foreach my $al (@aliases) {
+                    $is_alias = 1 if $al eq $plugin;
+                }
+
+                if ($is_alias) {
+                    $self->privmsg($reply_to, "is an alias that points to $plugin_name.");
+                } else {
+                    $self->privmsg($reply_to, "$plugin can also be called with: " . join(', ', @aliases));
+                }
+            } else {
+                $self->privmsg($reply_to, "$plugin does not seem to be loaded.");
+            }
+        } else {
+            $self->privmsg($reply_to, "Invalid usage.  Syntax: plugin <pluginname> help/author/syntax");
+        }
+        return;
+    } else {
+        $self->privmsg($reply_to, "Invalid usage.  Syntax: plugin <pluginname> help/author/syntax");
+    }
+}

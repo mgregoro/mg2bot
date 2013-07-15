@@ -1,0 +1,37 @@
+;;mg2bot plugin file;;
+dv:0.22
+v:0.02
+c:public
+n:gibberish
+{
+    my ($self, $event, $args) = @_;
+
+    # max number of words!
+    my $max = 10;
+
+    if (!$plugins_data{dict_words}) {
+        open(WORDS, "/usr/share/dict/words");
+        while (<WORDS>) {
+            chomp;
+            push (@{$plugins_data{dict_words}}, $_);
+        }
+        close(WORDS);
+    }
+
+    my $get_word = sub {
+        my $word_num = sprintf('%d', rand(scalar(@{$plugins_data{dict_words}})));
+        return $plugins_data{dict_words}[$word_num];
+    };
+
+    my $sb = sub {
+        my $num_words = sprintf('%d', rand($max));
+        my $scentence;
+        for (my $i = $num_words; $i > 0; --$i) {
+            $scentence .= $get_word->() . " ";
+        }
+        return $scentence;
+    };
+
+    # print the message!
+    $self->privmsg($event->to->[0], $sb->());
+}

@@ -1,0 +1,74 @@
+;;mg2bot plugin file;;
+# $Id: price 92 2004-03-31 11:08:31Z corrupt $
+dv:0.22
+v:0.05
+c:public
+n:price
+{
+    my ($self, $event, $search) = @_;
+    if ($search =~ /next\s*(\d*)/) {
+        my $inc = $1;
+        if (!$inc) {
+            $inc = 1;
+        }
+        if (@{$plugins_data{price_cache}}) {
+            my $next = ($plugins_data{price_position} + $inc);
+            $plugins_data{price_position} = $next;
+            if ($plugins_data{price_cache}[$next]) {
+                $self->privmsg($event->to->[0], "$plugins_data{price_cache}[$next]");
+                return;
+            } else {
+                $self->privmsg($event->to->[0], "Only 15 items returned per search - be more specific.");
+                return;
+            }
+        }
+    }
+    use LWP::UserAgent;
+    my $ua = LWP::UserAgent->new();
+    $ua->agent("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Q312461)");
+    my $req = HTTP::Request->new(GET => "http://www.pricewatch.com/s/search.asp?sc=$search");
+    my $res = $ua->request($req);
+    if ($res->content) {
+        my @strings;
+        my $content = $res->content;
+        # obtain content here
+        my $got_meat = 0;
+        my $info_string;
+        foreach my $line (split('\n', $content)) {
+            if ($line =~ /^\s*\>\s*$/) {
+                $got_meat = 1;
+                next;
+            }
+            next unless $got_meat;
+            next if $line eq "\n";
+            next if $line =~ /^<TD>\s*$/;
+            $got_meat = 0 if $line =~ /^<\/TD>\s*$/;
+            $info_string .= $line;
+            if ($got_meat == 0) {
+                push @strings, $info_string;
+                undef $info_string;
+            }
+        }
+        foreach my $info_string (@strings) {
+            $info_string =~ s/\n//g;
+            $info_string =~ s/\r//g;
+            $info_string =~ s/<b[\s\w\=\"]*>/ /g;
+            $info_string =~ s/<\/b>/ /g;
+            $info_string =~ s/<\/*p>/ /g;
+            $info_string =~ s/\<[\s\.\w\/\=\"\#]+\>//g;
+            $info_string =~ s/\&nbsp;/ /g;
+            $info_string =~ s/\$\s+/\$/g;
+            $info_string =~ s/\s{2,}/ /g;
+        }
+        @{$plugins_data{price_cache}} = @strings;
+        if ($strings[0] =~ /\w+/) {
+            $plugins_data{price_position} = 0;
+            $self->privmsg($event->to->[0], $strings[0]);
+        } else {
+            $self->privmsg($event->to->[0], "Sorry nothing found on pricewatch for $search\n");
+        }
+    } else {
+        $self->privmsg($event->to->[0], "Sorry nothing found on pricewatch for $search\n");
+        print "[price]: Got nothing back from pricewatch\n";
+    }
+}

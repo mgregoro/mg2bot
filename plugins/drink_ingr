@@ -1,0 +1,104 @@
+;;mg2bot plugin file;;
+dv:0.60
+v:0.15
+c:public,jabber
+n:drink_ingr
+r:HTTP::Request,LWP::Simple,LWP::UserAgent,Number::Format
+a:Tony, www.lessthanthree.com
+h:drink (ingredients)|(next [#])|(position [#])
+{
+    my ($self, $event, $args) = @_;
+    my $reply_to;
+	
+	my $content;
+	my $url;
+	if ($args =~ /position\s*(\d*)/) {
+		my $pos = $1;
+		if (!$pos){
+			$pos = 1;
+		}
+		if (@{$plugins_data{drink_cache}}) {
+			if ($plugins_data{drink_cache}[$pos]) {
+				$self->privmsg($event->to->[0], "($pos of " .
+                                                "$plugins_data{drink_total}) ".
+                                                "$plugins_data{drink_cache}[$pos]");
+				$plugins_data{drink_position} = $pos;
+				return;
+			} else {
+				$self->privmsg($event->to->[0], "Sorry, no drink at that number.");
+                return;
+			}
+		}
+	} elsif ($args =~ /next\s*(\d*)/) {
+        my $inc = $1;
+        if (!$inc) {
+            $inc = 1;
+        }
+        if (@{$plugins_data{drink_cache}}) {
+            my $next = ($plugins_data{drink_position} + $inc);
+            $plugins_data{drink_position} = $next;
+            if ($plugins_data{drink_cache}[$next]) {
+                $self->privmsg($event->to->[0], "($plugins_data{drink_position} of " . 
+												"$plugins_data{drink_total}) " . 
+												"$plugins_data{drink_cache}[$next]");
+                return;
+            } else {
+                $self->privmsg($event->to->[0], "Sorry, no more drinks in list. ");
+                return;
+            }
+        }
+    } elsif ($args ne ""){
+
+		my @output;    
+
+		if ($event->to->[0] =~ /^#/) {
+	  	  	$reply_to = $event->to->[0];
+    	} else {
+       	 	$reply_to = $event->nick;
+    	}
+
+		use HTTP::Request;
+    	use LWP::Simple;
+    	use LWP::UserAgent;
+
+    	my $ua = LWP::UserAgent->new(timeout =>     30,
+                                 keep_alive =>  1);
+    	$ua->agent("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Q312461)");
+
+    	$args =~ s/\s+/\+AND\+/g;
+		$url = "http://www.webtender.com/cgi-bin/search?name=&ingr=$args&what=drink&show=50&verbose=on";
+    	my $req = HTTP::Request->new(GET => $url);
+    	my $res = $ua->request($req);
+    	my $i = 0;
+    	if ($res->content){
+        	my $content = $res->content;
+        	my $yescont = 1;
+
+        	$content =~ s/<[^>]*>/\ /g;
+        	$content =~ s/\&\#160;//g;
+        	$content =~ s/\s+/\ /g;
+        	$content =~ s/^.*\ 1\.\ /1\.\ /g;
+        	$content =~ s/\ Drink\ n.*$//g;
+        	@output = split ('\d+\.\s', $content);
+			@{$plugins_data{drink_cache}} = @output;
+
+        	#print $content;
+        
+			if ($output[1] =~ /\w+/) {
+           		$plugins_data{drink_position} = 1;
+				$plugins_data{drink_total} = $#output;
+				$self->privmsg($reply_to, "(" . $plugins_data{drink_position} . " of " . 
+											"$#output" . ") " . $output[1]);
+        	} else {
+            	$self->privmsg($reply_to, "There were no results in the search");
+        	}
+			#if (@output[1]){
+				#	$self->privmsg($reply_to, "@output[1]");
+    			#} else {
+				#	$self->privmsg($reply_to, "Sorry, no drink found for \"$args\"");
+			#}		
+		}
+	}
+}
+
+

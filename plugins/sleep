@@ -1,0 +1,14 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:sleep
+{
+    my ($self, $event, $args) = @_;
+    if (is_master($event->from)) {
+        $sleeping = 1;
+        $self->me($event->to->[0], "goes to sleep like a good bot, tell " . $event->nick . " to wake me up if you need me.");
+    } else {
+        $self->privmsg($event->to->[0], "Sorry, " . $event->nick . " - You are not a registered master.");
+    }
+}

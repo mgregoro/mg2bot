@@ -1,0 +1,165 @@
+;;mg2bot plugin file;;
+dv:0.70
+v:0.01
+c:jabber
+n:trac
+s:subscribe <proj>,unsubscribe <proj>
+h:trac rss aggregator / event dispatcher
+a:mikey g, mg2bot addon plugin
+r:LWP::UserAgent,XML::Simple,Date::Parse,HTTP::Cookies
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    # take out the name if it starts with it, for "mg2bot, command" vs "+command"
+    my $name = $hdr->{n};
+    $arg =~ s/^$name //g;
+
+    # This plugin does not maintain it's state.
+    use LWP::UserAgent;
+    use Date::Parse;
+    use HTTP::Cookies;
+
+    my ($command, $proj, $auth_user, $auth_pass) = split(/ /, $arg);
+
+    unless ($command && $proj && $auth_user && $auth_pass) {
+        if ($command eq "subscribe") {
+            $self->privmsg($reply_to, "Usage: trac <subscribe/unsubscribe> <repo_name> <trac_user> <trac_pass>");
+            return;
+        }
+    }
+
+    my $url = "http://svn.wayne.edu/projects/$proj/timeline?ticket=on&milestone=on&changeset=on&wiki=on&max=10&daysback=90&format=rss";
+    my $login_url = "http://svn.wayne.edu/projects/$proj/login";
+    my $req = HTTP::Request->new(GET    =>  $url);
+    my $lreq = HTTP::Request->new(GET   =>  $login_url);
+
+    my $cj = HTTP::Cookies->new;
+    my $ua = LWP::UserAgent->new(cookie_jar => $cj);
+
+    $lreq->headers->authorization_basic($auth_user, $auth_pass);
+
+    my $lres = $ua->request($lreq);
+    $cj->extract_cookies($lres);
+
+    if ($command eq 'subscribe') {
+        if ($lres->content =~ /Wayne State University - Subversion Repository Index/) {
+            $self->privmsg($reply_to, "$proj does not exist!");
+            return;
+        } elsif ($lres->content !~ /logged in as $auth_user/) {
+            $self->privmsg($reply_to, "You don't have access to $proj (or you put in the wrong credentials)!");
+            return;
+        }
+    }
+
+    # we should be authed at this point.
+    if ($command eq "subscribe") {
+        my $key = 'trac-' . $reply_to . '-' . $proj;
+        if (exists($plugins_data{$key})) {
+            $self->privmsg($reply_to, "You already have a subscription to $proj");
+            return;
+        }
+
+        my $rxml;
+        my $xml_content = $ua->request($req)->content;
+        if ($xml_content =~ /403 Forbidden/) {
+            $self->privmsg($reply_to, "You don't have access to $proj");
+            return;
+        }
+
+        eval {
+            $rxml = XMLin($xml_content);
+        };
+
+        if (my $error = $@) {
+            $self->privmsg($reply_to, "Error subscribing to $url: $error $!");
+        } else {
+            # prime our data structure, any future events will be shown to them.
+            foreach my $item (@{$rxml->{channel}->{item}}) {
+                $plugins_data{$key}->{seen_guids}->{$item->{guid}->{content}} = {
+                    timestamp   =>  str2time($item->{pubDate}),
+                    link        =>  $item->{'link'},
+                    category    =>  $item->{category},
+                    title       =>  $item->{title},
+                    description =>  $item->{description},
+                };
+            }
+        }
+
+        # im counting on closures to help here.
+        
+        my $refresh_trac = sub {
+            $lres = $ua->request($lreq);
+            $cj->extract_cookies($lres);
+
+            if ($lres->content =~ /Wayne State University - Subversion Repository Index/) {
+                $self->privmsg($reply_to, "$proj seems to have gone away... auto-unsubscribing...");
+                delete($plugins_data{$key});
+                remove_scheduled_event($key);
+                return;
+            } elsif ($lres->content !~ /logged in as $auth_user/) {
+                $self->privmsg($reply_to, "You no longer have access to $proj (or you changed your credentials)! auto-unsubscribing...");
+                delete($plugins_data{$key});
+                remove_scheduled_event($key);
+                return;
+            }
+
+            eval {
+                $rxml = XMLin($ua->request($req)->content);
+            };
+            if (my $error = $@) {
+                print "[trac]: error refreshing subscription $key: $@";
+                $self->privmsg($reply_to, "Error refreshing your subscription to $proj: $@");
+                return;
+            } else {
+                foreach my $item (@{$rxml->{channel}->{item}}) {
+                    unless (exists($plugins_data{$key}->{seen_guids}->{$item->{guid}->{content}})) {
+                        $plugins_data{$key}->{seen_guids}->{$item->{guid}->{content}} = {
+                            timestamp   =>  str2time($item->{pubDate}),
+                            link        =>  $item->{'link'},
+                            category    =>  $item->{category},
+                            title       =>  $item->{title},
+                            description =>  $item->{description},
+                        };
+
+                        # get rid of html tags..
+                        $item->{description} =~ s/\<[^\>]+\>//g;
+
+                        $item->{description} = undef if $item->{description} =~ /--/;
+
+                        my $reply = "[trac - $proj - " . localtime(str2time($item->{pubDate})) . "]\n" .
+                            $item->{title} . "\n" . $item->{description} . "\n" . $item->{link} . "\n";
+
+                        $self->privmsg($reply_to, $reply);
+                    }
+                }
+            }
+        };
+
+        add_scheduled_event($key, 1 * (30 / $tick_length), $refresh_trac);
+        $self->privmsg($reply_to, "Subscription to $proj established.");
+    } elsif ($command eq "unsubscribe") {
+        my $key = 'trac-' . $reply_to . '-' . $proj;
+        delete($plugins_data{$key});
+        remove_scheduled_event($key);
+        $self->privmsg($reply_to, "Subscription to $proj canceled.");
+    } elsif ($command eq "subscriptions") {
+        my @subs;
+        foreach my $key (keys %plugins_data) {
+            push(@subs, $key) if $key =~ /$reply_to/;
+        }
+        $self->privmsg($reply_to, "Subscriptions:\n" . join("\n", @subs));
+    }
+}

@@ -1,0 +1,91 @@
+;;mg2bot plugin file;;
+dv:0.61
+v:0.01
+c:public,private
+n:virtuemonitor
+s:virtuemonitor (+|-)<email_address> <nick> <chan>
+p:11
+h:virtuemeter score plugin uses XML::Simple (should already be loaded for config parsing)
+r:LWP::Simple
+a:mikey g, mg2bot addon plugin
+t:autostart
+{
+    my ($self, $event) = @_;
+    use LWP::Simple;
+    #my $pxml = XMLin(get('http://www.virtuemeter.com/score/xml/' . $arg . '/'));
+    if ($self eq "start") {
+        add_scheduled_event('poll_vm_scores', 7200 * (1 / $tick_length), sub {
+            my $sstrs = {};
+            my $chan_scores = {};
+            for (keys %{$plugins_data{virtuemonitor}->{users}}) {
+                my $pxml = XMLin(get('http://www.virtuemeter.com/score/xml/' . $_ . '/'));
+                my $user = $plugins_data{virtuemonitor}->{users}->{$_};
+                if (exists($pxml->{vm_score})) {
+                    push(@{$chan_scores->{$user->{chan}}}, $pxml->{vm_score});
+                    if ($sstrs->{$user->{chan}}) {
+                        $sstrs->{$user->{chan}} .= "| $user->{nick}: $pxml->{vm_score_copy} ($pxml->{vm_score}) ";
+                    } else {
+                        $sstrs->{$user->{chan}} = "[www.virtuemeter.com] $user->{nick}: $pxml->{vm_score_copy} ($pxml->{vm_score}) ";
+                    }
+                }
+            }
+            foreach my $key (keys %$sstrs) {
+                my $sum = 0;
+
+                foreach my $score (@{$chan_scores->{$key}}) {
+                    $sum += $score;
+                }
+
+                $avg = sprintf('%.2f', $sum / scalar(@{$chan_scores->{$key}}));
+                $ic->topic($key, $sstrs->{$key} . ":: $key overall $avg");
+            }
+        });
+        run_scheduled_event('poll_vm_scores');
+        return 1;
+    } elsif ($self eq "stop") {
+        remove_scheduled_event('poll_vm_scores');
+        return 1;
+    }
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    # take out the name if it starts with it, for "mg2bot, command" vs "+command"
+    my $name = $hdr->{n};
+    $arg =~ s/^$name //g;
+
+    my ($op, $email, $nick, $chan) = $arg =~ /^(\+|-)([\w\@\.]+)\s+(.+?)\s+(.+?)\s*$/o;
+
+    if ($op eq "+") {
+        if (exists($plugins_data{virtuemonitor}->{users}->{$email})) {
+            $self->privmsg($reply_to, "$email already on the monitor list.");
+        } else {
+            $plugins_data{virtuemonitor}->{users}->{$email} = {
+                nick        =>      $nick,
+                chan        =>      $chan,
+            };
+            $self->privmsg($reply_to, "$email added to the monitor list.");
+            run_scheduled_event('poll_vm_scores');
+        }
+    } elsif ($op eq "-") {
+        if (exists($plugins_data{virtuemonitor}->{users}->{$email})) {
+            delete ($plugins_data{virtuemonitor}->{users}->{$email});
+            $self->privmsg($reply_to, "$email removed from the monitor list.");
+            run_scheduled_event('poll_vm-scores');
+        } else {
+            $self->privmsg($reply_to, "$email not on the monitor list.");
+        }
+    } elsif ($arg eq "list") {
+        $self->privmsg($reply_to, "Currently monitoring " . join(', ', keys %{$plugins_data{virtuemonitor}->{users}}));
+    }
+}

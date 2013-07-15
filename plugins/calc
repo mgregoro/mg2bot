@@ -1,0 +1,83 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,jabber
+n:calc
+{
+    my ($self, $event, $args) = @_;
+
+    my $answer;
+    my $format;
+
+    ($args, $format) = split(/\s*=\s*/, $args);
+    my $orig_args = $args;
+
+    if ($args =~ /^(?:urmom\s*\+\s*mymom|mymom\s*\+\s*urmom)$/) {
+        $self->privmsg($event->to->[0], "$orig_args = swirling vortex causing the world to be sucked into hell");
+
+    } elsif ($args =~ /dog/i && $args =~ /cat/ && $args =~ /living together/ && $args =~ /\+/) {
+        $self->privmsg($event->to->[0], "$orig_args = mass hysteria");
+    } else {
+        $args =~ s/\^/\*\*/g;
+        $args =~ s/pi/3\.14159265358979323846/gi;
+        $args =~ s/\bgay\b/rand(500)/gi;
+
+        if ($args =~ /^(?:[\(\)0-9\*\/\+\-\%\s\.\,abcdefABCDEFxb]|abs|cos|int|log|rand|sin|sqrt|srand)*$/) {
+            my @replaced_words;
+            foreach my $word (split(/[\s\*\/\+\-\%]+/, $args)) {
+                if ($word =~ /[a-fA-F]+/) {
+
+                    my $already_replaced = 0;
+                    foreach (@replaced_words) {
+                        if ($_ eq $word) {
+                            $already_replaced = 1;
+                        }
+                    }
+
+                    next if $already_replaced;
+                    next if $word =~ /^0x/;
+
+                    if ($word =~ /^[a-fA-F0-9]+$/) {
+                        $args =~ s/$word([\s\*\/\+\-\%]+)/0x$word$1/g;
+                        if ($args =~ /[\s\*\/\+\-\%]+$word$/) {
+                            $args =~ s/$word$/0x$word/g;
+                        }
+                        push(@replaced_words, $word);
+                    }
+                }
+            }
+
+            if ($args =~ /^[a-fA-F]+$/) {
+                $args =~ s/$args/0x$args/;
+            }
+
+            $args =~ s/,//g;
+            my $calc_code = '$answer = ' . "$args";
+            eval $calc_code;
+        } else {
+            $self->privmsg($event->to->[0], "please use math for this. kthx.");
+            return;
+        }
+        if ($@) {
+            if ($@ =~ /ivision/) {
+                $self->privmsg($event->to->[0], "$orig_args = inf");
+            } else {
+                $self->privmsg($event->to->[0], "please use math for this. kthx. ($@)");
+            }
+        } else {
+            if ($format) {
+                if ($format =~ /(\d+)/) {
+                    if ($1 > 50) {
+                        $self->privmsg($event->to->[0], "fuck you.");
+                    } else {
+                        $self->privmsg($event->to->[0], "$orig_args = " . sprintf("$format", $answer));
+                    }
+                } else {
+                    $self->privmsg($event->to->[0], "$orig_args = " . sprintf("$format", $answer));
+                }
+            } else {
+                $self->privmsg($event->to->[0], "$orig_args = $answer");
+            }
+        }
+    }
+}

@@ -1,0 +1,134 @@
+<opt>
+  <user user_profile="I AM POOR, SEND ME MONEY. KTHNX." name="tony">
+    <country>USA</country>
+    <givenname>Tony</givenname>
+    <level>10</level>
+    <hostmask>*!tony@adsl-216-102-196-76.dsl.snfc21.pacbell.net</hostmask>
+    <hostmask>*!tony@lessthanthree.com</hostmask>
+    <sponsorname>root</sponsorname>
+  </user>
+  <user user_profile="unf." name="toby">
+    <country>USA</country>
+    <givenname>toby (&lt;3)</givenname>
+    <level>50</level>
+    <hostmask>*!toby@*.lqx.net</hostmask>
+    <sponsorname>toby</sponsorname>
+  </user>
+  <user user_profile="10" name="skorous">
+    <country>USA</country>
+    <givenname>Marty</givenname>
+    <level>1</level>
+    <hostmask>*!~ac4249@ajsmgmt4.grid.wayne.edu</hostmask>
+    <sponsorname>himself</sponsorname>
+  </user>
+  <user user_profile="AMELIA!@#!@$" name="amelia">
+    <country>USA</country>
+    <givenname>Amelia</givenname>
+    <level>10</level>
+    <hostmask>*!~amelia@*.chi-lem.il.cable.rcn.com</hostmask>
+    <sponsorname>herself</sponsorname>
+  </user>
+  <user user_profile="HI i am mikey G.  I wrote the user system.  Contact me with errors and problems." name="mikeyg">
+    <country>USA</country>
+    <givenname>Michael</givenname>
+    <level>50</level>
+    <hostmask>*!mikeyg@oxygen.accs.wayne.edu</hostmask>
+    <hostmask>*!mikeyg@tq.accs.wayne.edu</hostmask>
+    <hostmask>*!mikeyg@mg2.org</hostmask>
+    <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user user_profile="C++,ASP/(VB,C#), SQL/mssql/msde" name="benk">
+    <country>USA</country>
+    <givenname>Ben</givenname>
+    <level>1</level>
+    <hostmask>*!*@198-93-115-126.xdsl.qx.net</hostmask>
+    <sponsorname>deftekno</sponsorname>
+  </user>
+  <user user_profile="captain of the n00bball team" name="wicked">
+    <country>USA</country>
+    <givenname>Craig</givenname>
+    <level>10</level>
+    <hostmask>*!wicked@uniquefreak.org</hostmask>
+    <hostmask>*!wicked@infinite.bliss</hostmask>
+    <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user user_profile="qwebirc homie" name="cgiirc">
+      <country>USA</country>
+      <givenname>Particular Individual</givenname>
+      <level>1</level>
+      <hostmask>*!qwebirc@util.mg2.org</hostmask>
+      <sponsorname>mikeyg</sponsorname>
+    </user>
+  <user user_profile="You know what it is..." name="bmoody">
+    <country>USA</country>
+    <givenname>Brian</givenname>
+    <level>1</level>
+    <hostmask>*!~brian88lx@*.try.wideopenwest.com</hostmask>
+    <hostmask>*!bmoody@mg2.org</hostmask>
+    <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user name="for">
+    <givenname>his</givenname>
+    <country></country>
+    <level>dead</level>
+    <sponsor>homies</sponsor>
+  </user>
+  <user name="testuserface">
+    <givenname>Ralph</givenname>
+    <country>USA</country>
+    <level>10</level>
+    <sponsor>mikeyg</sponsor>
+  </user>
+  <user user_profile="Linux Ninja" name="brandon">
+    <country>USA</country>
+    <givenname>Brandon</givenname>
+    <level>10</level>
+    <hostmask>*!brandon@mg2.org</hostmask>
+    <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user name="testuser">
+    <givenname>Ralph</givenname>
+    <country>USA</country>
+    <level>10</level>
+    <sponsor>mikeyg</sponsor>
+  </user>
+  <user name="shaan">
+    <country>USA</country>
+    <givenname>Shaan</givenname>
+    <level>1</level>
+    <hostmask>*!*shaan*@adsl-215-66-109.bct.bellsouth.net</hostmask>
+    <hostmask>*!~shaan@*.se.biz.rr.com</hostmask>
+    <hostmask>*!shaan@*.se.biz.rr.com</hostmask>
+    <sponsorname>reflecks</sponsorname>
+  </user>
+  <user name="rmah">
+    <country>USA</country>
+    <givenname>rmah</givenname> 
+    <level>10</level>
+    <hostmask>*!~Robert_Ma@*.dyn.optonline.net</hostmask>
+    <hostmask>*!~Rob@*.dyn.optonline.net</hostmask>
+    <hostmask>*!~rmah@68.198.111.124</hostmask>
+    <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user name="cplater">
+      <country>USA</country>
+      <givenname>Chuck</givenname>
+      <level>10</level>
+      <hostmask>*!~cplater@cplater.accs.wayne.edu</hostmask>
+      <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user name="deftekno">
+      <country>USA</country>
+      <givenname>Brandon</givenname>
+      <level>10</level>
+      <hostmask>*!deftekno@mg2.org</hostmask>
+      <sponsorname>root</sponsorname>
+  </user>
+  <user name="jeek">
+      <country>USA</country>
+      <givenname>TJ</givenname>
+      <level>10</level>
+      <hostmask>jeek!~jeek@awesome.jeek.net</hostmask>
+      <sponsorname>mikeyg</sponsorname>
+  </user>
+</opt>

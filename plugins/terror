@@ -1,0 +1,48 @@
+;;mg2bot plugin file;;
+dv:0.60
+v:0.000000001
+c:public
+n:terror
+r:HTTP::Request,LWP::Simple,LWP::UserAgent,Number::Format
+a:Tony, www.lessthanthree.com
+{	
+	
+	my ($self, $event, $args) = @_;
+	my $report;
+	use HTTP::Request;
+	use LWP::Simple;
+	use LWP::UserAgent;	
+	use Number::Format;
+
+	my $ua = LWP::UserAgent->new(timeout =>     30,
+                                 keep_alive =>  1);
+	$ua->agent("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Q312461)");
+	
+	my $req = HTTP::Request->new(GET =>"http://www.whitehouse.gov/homeland/index.html");
+	my $res = $ua->request($req);
+	
+	if ($res->content){ 
+		my $content = $res->content;
+		my $yescont = 1;	
+		$content =~ s/\n/\ /g;
+		$content =~ s/^.*images\/threat\///g;
+		$content =~ s/\.jpg.*//g;	
+
+		if ($content eq "elevated"){
+			$report = "8,1ELEVATED";
+		} elsif ($content eq "severe"){
+			$report = "5,1SEVERE";
+		} elsif ($content eq "high"){
+			$report = " 7,1HIGH";
+		} elsif ($content eq "guarded"){
+			$report = "2,1GUARDED";
+		} elsif ($content eq "low"){
+			$report = "3,1LOW";
+		} else {
+			$report = "I don't know!";
+		}
+	
+		$self->privmsg($event->to->[0], "$report");
+	}	
+
+}

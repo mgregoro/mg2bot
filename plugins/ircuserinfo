@@ -1,0 +1,18 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:ircuserinfo
+{
+    my ($self, $event, $args) = @_;
+
+    $args = lc($args);
+    
+    if (exists $known_users{$args}) {
+        $self->privmsg($event->to->[0], "User: " . $known_users{$args}->{hostmask} . " (" .
+            $known_users{$args}->{ircname} . ")");
+        $self->privmsg($event->to->[0], "Present: " . $known_users{$args}->{present});
+    } else {
+        $self->privmsg($event->to->[0], "User $args doesn't exist.");
+    }
+}

@@ -1,0 +1,41 @@
+;;mg2bot plugin file;;
+dv:0.57
+v:0.10
+c:public,private
+t:autostart
+n:botlink_test
+{
+    my ($self, $event, $args) = @_;
+
+    if ($self eq "start") {
+        my $code = sub {
+            my ($frombot, $type, $message) = @_;
+            my ($reply_to, $message) = $message =~ /^([\#\w\^\|\]\[\_\`]+)\s(.+)$/;
+            $ic->privmsg($reply_to, "$frombot told me $message.\n");
+        };
+        $bl->add_handler('test', $code);
+        return 1;
+    } elsif ($self eq "stop") {
+        # get em all.
+        $bl->del_handlers('test');
+    }
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    my ($targetbot, $out_message) = $args =~ /^([\w\^\|\]\[\_\`]+)\s(.+)$/;
+
+    unless ($targetbot) {
+        $self->privmsg($reply_to, "invalid input.");
+        return;
+    }
+
+    unless ($bl->send_message($targetbot, "test $reply_to $out_message")) {
+        $self->privmsg($reply_to, "bot $targetbot not connected!");
+    }
+
+}

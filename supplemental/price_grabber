@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+
+# obtains prices from pricewatch
+# intended to be a loadable module for mg2bot.
+
+use strict;
+
+use LWP::UserAgent;
+
+my $pw = "http://www.pricewatch.com";
+
+my $ua = LWP::UserAgent->new();
+$ua->agent("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Q312461)");
+

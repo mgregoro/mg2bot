@@ -1,0 +1,47 @@
+;;mg2bot plugin file;;
+# $Id: mg2info 92 2004-03-31 11:08:31Z corrupt $
+dv:0.30
+v:0.10
+c:public
+n:mg2info
+{
+    my ($self, $event, $args) = @_;
+
+    my $target;
+
+    if ($args =~ /(\w+):(\w+)/) {
+        $args = $1;
+        $target = $2;
+    }
+
+    my $user;
+    if ($have_mg2) {
+        $user = mg2::User->new(User      =>      $args);
+    } else {
+        $self->privmsg($event->to->[0], "This bot isn't mg2 equipped.  This plugin shouldn't be loaded.\n");
+        return;
+    }
+
+
+    if ($user && $target) {
+        if (is_master($event->from)) {
+            $self->privmsg($event->to->[0], "$target: " . $user->data->{$target}->[0]);
+        } else {
+            $self->privmsg($event->to->[0], "You're not my master.");
+        }
+        return;
+    }
+
+    if ($user) {
+        if ($user->entry->get_value('userProfile')) {
+            $self->privmsg($event->to->[0], "$args is: " . $user->entry->get_value('givenName') . " from " . $user->entry->get_value('c') . ".  Level: " . 
+                                $user->level . ".  Sponsored by: " . $user->sponsor . ". [" . $user->entry->get_value('userProfile') . "]");
+
+        } else {
+            $self->privmsg($event->to->[0], "$args is: " . $user->entry->get_value('givenName') . " from " . $user->entry->get_value('c') . ".  Level: " .
+                                $user->level . ".  Sponsored by: " . $user->sponsor . ".");
+        }
+    } else {
+        $self->privmsg($event->to->[0], "$args isn't an mg2 user, go sign up! https://secure.mg2.org/cgi-bin/sponsorPicker.cgi");
+    }
+}

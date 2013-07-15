@@ -1,0 +1,37 @@
+;;mg2bot plugin file;;
+dv:0.64
+v:2.00
+c:public,private,jabber
+n:gcalc
+r:WWW::Google::Calculator
+s:gcalc <gcalc compute syntax>
+h:test plugin
+a:mikey g, mg2bot addon plugin
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    # take out the name if it starts with it, for "mg2bot, command" vs "+command"
+    my $name = $hdr->{n};
+    $arg =~ s/^$name //g;
+        
+    # Your code goes here!
+    use WWW::Google::Calculator;
+    my $calc = new WWW::Google::Calculator;
+
+    if (my $answer = $calc->calc($arg)) {
+        $self->privmsg($reply_to, $answer);
+    } 
+}

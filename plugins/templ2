@@ -1,0 +1,30 @@
+;;mg2bot plugin file;;
+dv:0.61
+v:0.01
+c:public,private,join,kick,part,quit,nick,caction,topic
+n:templ2
+s:no syntax - starts on load
+p:11
+h:test plugin
+a:mikey g, mg2bot addon plugin
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    # take out the name if it starts with it, for "mg2bot, command" vs "+command"
+    my $name = $hdr->{n};
+    $arg =~ s/^$name //g;
+
+}

@@ -1,0 +1,68 @@
+;;mg2bot plugin file;;
+# $Id: log 201 2005-02-24 22:21:23Z corrupt $
+dv:0.62
+v:1.0
+c:public,private,jabber
+n:random_quote
+s:logs channels - no syntax - starts on load
+h:logs channels - no syntax - starts on load
+a:mikey g, leverages the log_to_db database.. to pull random quotes
+al:rq,randquote
+cf:conf/plugins/random_quote.xml
+{
+    my ($self, $event, $arg) = @_;
+
+    my $hdr = $_[$#_];
+
+    # we need at least one context in which we can find this plugin. (we actually don't)
+    my $pcontext = $hdr->{_cc_};
+
+    # we also need the name of this plugin. (we actually don't)
+    my $pname = $hdr->{n};
+
+    use DBI;
+    my $dbh = DBI->connect($hdr->{cf}->{dsn}, $hdr->{cf}->{username}, $hdr->{cf}->{password});
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    my $sth = $dbh->prepare(q/
+        select 
+            channel, nick, timestamp, data 
+        from 
+            channel_log
+        where 
+            nick like ? AND data not like '%***%'
+        order by
+            rand()
+        limit 1
+    /);
+    $sth->execute("\%$arg\%");
+
+    my $ar = $sth->fetchrow_arrayref;
+    if ($$ar[0]) {
+        $self->privmsg($reply_to, "<$$ar[0]/$$ar[1]> $$ar[3]");
+    } else {
+        $sth = $dbh->prepare(q/
+            select 
+                channel, nick, timestamp, data 
+            from 
+                channel_log
+            where 
+                data like ? AND data not like '%***%'
+            order by
+                rand()
+            limit 1
+        /);
+        $sth->execute("\%$arg\%");
+        my $ar = $sth->fetchrow_arrayref;
+
+        if ($$ar[0]) {
+            $self->privmsg($reply_to, "<$$ar[0]/$$ar[1]> $$ar[3]");
+        }
+    }
+}

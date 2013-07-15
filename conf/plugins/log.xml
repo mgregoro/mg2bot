@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+
+<log_config version="1.0" log_version="0.10">
+    <log_dir>logs/</log_dir>
+</log_config>

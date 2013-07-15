@@ -1,0 +1,23 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,private
+n:switchdb
+{
+    my ($self, $event, $args) = @_;
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    if (-e "$mg2bot_dir/data/$args.db") {
+        untie %learned;
+        tie %learned, 'DB_File', "$mg2bot_dir/data/$args.db";
+        $db_file = "$mg2bot_dir/data/$args.db";
+        $self->privmsg($reply_to, "Database switched to: $mg2bot_dir/data/$args.db");
+    }
+
+}

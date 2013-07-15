@@ -1,0 +1,9 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:dance
+{
+    my ($self, $event, $args) = @_;
+    $self->me($event->{to}->[0], "gets down and boogies for " . $event->nick . ".");
+}

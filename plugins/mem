@@ -1,0 +1,12 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:mem
+{
+    my ($self, $event, $args) = @_;
+    my $data;
+    chomp($data = `/bin/ps -eo comm,rss,pmem | /bin/grep d.pl | /bin/grep -v grep`);
+    my ($pid, $size, $percent) = split(/\s+/, $data);
+    $self->privmsg($event->to->[0], "$size\Kb ($percent%).");
+}

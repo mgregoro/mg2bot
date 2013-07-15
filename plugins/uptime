@@ -1,0 +1,11 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,jabber
+n:uptime
+{
+    my ($self, $event, $args) = @_;
+
+    my $uptime = getHMS((time() - $start_time));
+    $self->privmsg($event->to->[0], "$my_nick: running $uptime.");
+}

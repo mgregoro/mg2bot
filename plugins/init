@@ -1,0 +1,41 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:private,public
+n:init
+{
+    my ($self, $event, $args) = @_;
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    my ($nick, $chan);
+    if ($args =~ /^([\w\^\|\]\[\_\`]+)\s([\#\w\^\|\]\[\_\`]+)$/) {
+        $nick = $1;
+        $chan = $2;
+    } else {
+        $self->privmsg($reply_to, "Sorry, format must be: init nick #chan");
+        return undef;
+    }
+
+    print "$args\n";
+    unless (exists $channels->{$chan}->{$nick}) {
+        $self->privmsg($reply_to, "Sorry $nick doesn't exist in $chan.");
+        return undef;
+    }
+
+    my $mask = $channels->{$chan}->{$nick}->{mask};
+
+    my $host = $mask =~ /^[\w\^\|\]\[\_\`]+\!^[\w\^\|\]\[\_\`]+\@([\w\_\-\.]+)/;
+    
+    if (exists $bl->{_rel}->{$nick}) {
+        if ($bl->initiate($my_nick, $nick, $mask, $host)) {
+            $self->privmsg($reply_to, "$my_nick <-> $nick link established.");
+        }  
+    }
+    return undef;
+}

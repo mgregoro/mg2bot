@@ -1,0 +1,103 @@
+;;mg2bot plugin file;;
+dv:0.60
+v:0.01
+c:public,jabber
+n:gfight
+r:HTTP::Request,LWP::Simple,LWP::UserAgent,Number::Format
+a:Tony, www.lessthanthree.com
+{
+
+    my ($self, $event, $args) = @_;	
+
+	use HTTP::Request;
+	use LWP::Simple;
+	use LWP::UserAgent;	
+	use Number::Format;
+
+	my $one;
+	my $two;
+	my $output;
+
+    my $reply_to;
+        if ($event->to->[0] =~ /^#/) {
+            $reply_to = $event->to->[0];
+        } else {
+            $reply_to = $event->nick;
+    }
+
+	my $ua = LWP::UserAgent->new(timeout =>     30,
+                                 keep_alive =>  1);
+	$ua->agent("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Q312461)");
+	
+
+	$args =~ s/[^a-zA-Z_0-9\.\ ]+//g;
+	my @search = split(/\ vs\.\ /,$args);
+	
+
+if (( @search[0] ne "" )&&( @search[1] ne "")){	
+
+	my $req1 = HTTP::Request->new(GET =>"http://www.google.com/search?q=\"@search[0]\"");
+	my $req2 = HTTP::Request->new(GET =>"http://www.google.com/search?q=\"@search[1]\"");
+	
+	my $res1 = $ua->request($req1);
+	my $res2 = $ua->request($req2);
+	
+	if ($res1->content){ 
+		$one = $res1->content;
+		$one =~ s/\n//g;
+		$one =~ s/^.*<\/b>\ (of\ about\ |of\ )<b>//g;	
+		$one =~ s/<\/b>\ for\ <b>.*$//g;
+		if (( $one =~ /No pages were found containing/ ) || ( $one =~ /Showing web page information for/ ) || ($one =~ /did not match any documents/) || ($one =~ /No pages were found containing /)) {
+			$one = 0;
+		}
+	}
+
+    if ($res2->content){
+		$two = $res2->content;
+        $two =~ s/\n//g;
+		$two =~ s/^.*<\/b>\ (of\ about\ |of\ )<b>//g;        
+        $two =~ s/<\/b>\ for\ <b>.*$//g;
+		if (( $two =~ /No pages were found containing/ ) || ($two =~ /Showing web page information for/) || ($two =~ /did not match any documents/) || ($two =~ /No pages were found containing /)) {
+			$two = 0;
+		}
+	}
+
+	$home = $one;
+	$visitor = $two;
+	$home =~ s/,//g;
+	$visitor =~ s/,//g;
+	$home =~ s/\s+//g;
+	$visitor =~ s/\s+//g;
+
+	if ( (@search[0] eq "mg2bot")||(@search[1] eq "mg2bot") ){
+		$output = "mg2bot wins everything.";
+	} else {
+			
+
+	if ($home > $visitor)	{
+		$output = "@search[0] wins! @search[0] = $one hits and @search[1] = $two hits";
+	} elsif ( $visitor > $home ){
+		$output = "@search[1] wins! @search[1] = $two hits and @search[0] = $one hits";
+	} elsif ($home == $visitor) {
+		if ($home != 0 ){
+			$output = "ITS A TIE! @search[0] and @search[1] both have $one hits!";
+		} else {
+			$output = "I dunno?";
+		}
+	} else {
+		$output = "ERROR!";
+	}
+	
+	}
+
+	# This is a quick hack, i should do this better
+	unless ( $output =~ />/ ){ 
+		$self->privmsg($reply_to, "$output");
+	} else {
+		$self->privmsg($reply_to, "I think I just prevented a flood");
+	}
+} else {
+	$self->privmsg($reply_to, "Check your syntax!");
+}
+
+}

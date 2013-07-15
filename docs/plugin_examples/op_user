@@ -1,0 +1,46 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,private
+n:op_user
+{
+    my ($self, $event, $args) = @_;
+
+    # reply to is for multiple class plugins.. ie ones that run on 
+    # private or public.  we pretty much say, if it starts with a #
+    # then it's a channel.
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # $self, is the $ic object.. the $ic object is a
+    # Net::IRC::Connection object.
+
+    # $event is a Net::IRC::Event object.
+
+    # $args is any data passed to the plugin.. ie someone
+    # runs plugin_name blah, $args would be 'blah'.. dam.. ok..
+
+    # we actually need to unpack args cos we need a CHANNEL too.. god im dumb
+
+    my ($op_channel, $user_to_op) = split(/\s+/, $args);
+
+    # we aren't qualifying input for the sake of simplicity.
+
+    # now its very simple.. we'd probably qualify our input.. make sure
+    # the characters for the nick are valid characters.. ie no ~'s or high
+    # ascii... that can be bad...
+
+    # we dont do it this way anymore.. we should queue it..
+    push(@{$mode_changes->{$op_channel}}, ['+o', $user_to_op]);
+
+    # for educational purposes.. i'll show you what the queue runs...
+    # you CAN do it this way if you want INSTANT performance.. otherwise
+    # the queue will run on the next configured tick.
+
+    # does the same thing
+    #$self->mode($op_channel, '+o', $user_to_op);
+}

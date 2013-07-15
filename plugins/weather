@@ -1,0 +1,95 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.21
+c:public,private,jabber
+n:weather
+h:Will search for the args provided; Will not return empty stats anymore.
+s:weather zipcode; weather city, state
+r:Weather::Underground
+a:tony c. (mg2bot base plugin)
+{
+    my ($self, $event, $args) = @_;
+	my ($zip, $detailed);
+
+	my $reply_to;
+    	if ($event->to->[0] =~ /^#/) {
+        	$reply_to = $event->to->[0];
+    	} else {
+        	$reply_to = $event->nick;
+    	}
+	
+	use Weather::Underground;
+
+	my ($arrayref, $degreeF, $degreeC, $place, $humid, $cond, $wind, $press, $wind_C);
+    my ($wind_F, $updated, $weathersay);
+	my $i = 0;
+	
+	if ($args ne ""){
+
+		while ($i < 3){
+    		my $weather = Weather::Underground->new(
+            	place   =>  $args,);
+    			
+			$arrayref = $weather->getweather();
+			$degreeF = $arrayref->[0]->{temperature_fahrenheit}; 
+			$degreeC = $arrayref->[0]->{temperature_celsius};
+			$place = $arrayref->[0]->{place};
+			$humid = $arrayref->[0]->{humidity};
+			$cond = $arrayref->[0]->{conditions};
+			$wind = $arrayref->[0]->{wind};
+			$press = $arrayref->[0]->{pressure};
+			$wind_C = $arrayref->[0]->{windchill_celsius};
+			$wind_F = $arrayref->[0]->{windchill_fahrenheit};
+			$updated = $arrayref->[0]->{updated};
+
+				if ($place ne ""){		
+					$i = 3;
+				} else {
+					$i++;
+				}
+					
+		}
+			if ($place eq ""){
+				$self->privmsg($reply_to, "Could not find weather stats for \"$args.\""); 
+			} else {
+				
+				$weathersay = $weathersay . "loc($place): ";
+				
+				if ($degreeF ne "" && $degreeF ne "N/A"){
+					$weathersay = $weathersay . "[temp: $degreeF°F/$degreeC°C] ";
+				}
+
+				if ($humid ne "" && $humid ne "N/A"){
+					$weathersay = $weathersay . "[humidity: $humid%] ";
+				}
+				
+				if ($wind ne "" && $wind ne "N/A"){
+					$weathersay = $weathersay . "[windspeed: $wind] ";
+				}
+
+				if ($cond ne "" && $cond ne "N/A"){
+					$weathersay = $weathersay . "[Conditions: $cond] ";
+				}
+
+				if ($press ne "" && $press ne "N/A in / -"){
+					$weathersay = $weathersay . "[pressure: $press] ";
+				}
+
+				if ($wind_F ne "" && $press ne "N/A"){
+					$weathersay = $weathersay . "[windchill $wind_F°F/$wind_C°C] ";
+				}
+
+				#if ($updated ne ""){
+				#	$weathersay = $weathersay . "[Updated: $updated] ";
+				#}
+			
+				$self->privmsg($reply_to, "$weathersay");
+				
+				}	
+			
+	
+	} else {
+		$self->privmsg($reply_to, "Please provide a zipcode or city, state");
+	}
+}
+

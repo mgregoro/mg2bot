@@ -1,0 +1,40 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,jabber
+n:you
+{
+    my ($self, $event, $args) = @_;
+
+    if ($args =~ /\byou\b/i) {
+        $args =~ s/\byou\b/I/gi;
+    } elsif ($args =~ /\bi\b/i) {
+        $args =~ s/\bi\b/you/gi;
+    }
+    $args =~ s/\bthis\b/that/ig;
+    $args =~ s/(\bim\b|\bi'm\b)/you're/gi;
+    $args =~ s/\byour\b/my/ig;
+
+    if ($args =~ /^are (.*)$/) {
+        $self->privmsg($event->to->[0], "Yes, I am $1");
+    } elsif ($args =~ /^were (.*)$/) {
+        $self->privmsg($event->to->[0], "Yeah, I was $1");
+    } elsif ($args =~ /^(?:can\'t|cant|can not) (.*)$/) {
+        $self->privmsg($event->to->[0], "No, I can't $1");
+    } elsif ($args =~ /^(?:don\'t|dont|do not) (.*)$/) {
+        $self->privmsg($event->to->[0], "No, I don't $1");
+    } elsif ($args =~ /(?:^aren\'t|arent|are not) (.*)$/) {
+        $self->privmsg($event->to->[0], "No, I'm not $1");
+    } elsif ($args =~ /(?:^didn\'t|didnt|did not) (.*)$/) {
+        $self->privmsg($event->to->[0], "You're right.  I didn't $1");
+    } elsif ($args =~ /^must (.*)$/) {
+        $self->privmsg($event->to->[0], "That's right!  I must $1");
+    } elsif ($args =~ /^never (.*)$/) {
+        $self->privmsg($event->to->[0], "Well, right.. I couldn't ever $1");
+    } elsif (length($args) < 1) {
+        $self->privmsg($event->to->[0], "I what?");
+    } else {
+        $self->privmsg($event->to->[0], "Yes, I do $args");
+    }
+
+}

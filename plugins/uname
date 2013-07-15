@@ -1,0 +1,10 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,jabber
+n:uname
+{
+    my ($self, $event, $args) = @_;
+
+    $self->privmsg($event->to->[0], `uname -a`);
+}

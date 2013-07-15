@@ -1,0 +1,10 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:play
+{
+
+    my ($self, $event, $args) = @_;
+
+}

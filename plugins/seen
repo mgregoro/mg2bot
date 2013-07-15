@@ -1,0 +1,56 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,private,join,part,quit
+n:seen
+{
+    my ($self, $event, $args) = @_;
+
+    my ($reply_to, $channel, $user);
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+        $channel = $reply_to;
+        $user = $args;
+    } else {
+        $reply_to = $event->nick;
+        ($channel, $user) =~ split(/\s+/, join(' ', @{$event->args}));
+    }
+
+    if ($event->type eq "join") {
+        # log their timestamp...
+        $plugins_data{seen}->{'join'}->{$channel}->{$event->nick} = localtime();
+    } elsif (($event->type eq "part") || ($event->type eq "quit")) {
+        # log their part timestamp
+        $plugins_data{seen}->{'part'}->{$channel}->{$event->nick} = localtime();
+    } else {
+        # ...
+        my $srch = sub {
+            my ($type, $chan, $usr) = @_;
+            foreach my $key (keys %{$plugins_data{seen}->{$type}->{$chan}}) {
+                if ($key =~ /$usr/i) {
+                    return $plugins_data{seen}->{$type}->{$chan}->{$key};
+                }
+            }
+            return undef;
+        };
+
+        unless ($channel =~ /^#/) {
+            $self->privmsg($reply_to, "Sorry, you must specify a channel. ($channel, $user)");
+            return;
+        }
+        if (is_uic($channel, $user)) {
+            if (my $ts = $srch->('join', $channel, $user)) {
+                $self->privmsg($reply_to, "$user is in $channel, and has been since $ts.");
+                return;
+            } else {
+                $self->privmsg($reply_to, "$user is in $channel, but I don't see any info for them.");
+                return;
+            }
+        } else {
+            if (my $ts = $srch->('part', $channel, $user)) {
+                $self->privmsg($reply_to, "$user was last seen in $channel on $ts.");
+                return;
+            }
+        }
+    }
+}

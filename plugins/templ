@@ -1,0 +1,16 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:template
+{
+    my ($self, $event, $args) = @_;
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+}

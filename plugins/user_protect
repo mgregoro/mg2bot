@@ -1,0 +1,76 @@
+;;mg2bot plugin file;;
+dv:0.61
+v:0.01
+c:add_mode,remove_mode,kick
+n:user_protect
+s:no syntax - starts on load
+p:11
+h:test plugin
+a:mikey g, mg2bot addon plugin
+# $Id: user_protect 148 2004-06-04 22:01:26Z corrupt $
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    if ((is_master($event->from)) || ($event->nick eq $my_nick) || ($event->from =~ /^#/)) {
+        # assures we are passive.. but do nothing if the doer is a master or myself!
+        return undef;
+    }
+
+    if ($hdr->{_cc_} eq "add_mode") {
+        my ($channel, $target, $mode, $nick, $mask) = (@_[2..4], $event->nick, $event->from);
+        if ($mode eq "b") {
+            # first get all the affected users
+            foreach my $user (keys %{$channels->{$channel}}) {
+                next if $user =~ /^\*/;
+                if (mask_match($channels->{$channel}->{$user}->{mask}, $target)) {
+                    if (mask_to_user($channels->{$channel}->{$user}->{mask})) {
+                        # enqueue, and push immediately since security is involved..
+                        qmc($channel, '-b', $target);
+                        qmc($channel, '-o', $nick) if is_opped($channel, $nick);
+                        return undef;
+                    } elsif (is_opped($channel, $user)) {
+                        qmc($channel, '-b', $target);
+                        qmc($channel, '-o', $nick) if is_opped($channel, $nick);;
+                        return undef;
+                    } elsif (is_voiced($channel, $user)) {
+                        qmc($channel, '-b', $target);
+                        qmc($channel, '-o', $nick) if is_opped($channel, $nick);
+                        return undef;
+                    }
+                }
+            }
+        }
+    } elsif ($hdr->{_cc_} eq "remove_mode") {
+        my ($channel, $target, $mode, $nick, $mask) = (@_[2..4], $event->nick, $event->from);
+        if ($mode eq "o") {
+            # if they're de-opping themselves, let them
+            return undef if lc($nick) eq lc($target);
+            if (is_opped($channel, $target)) {
+                qmc($channel, '-o', $nick) if is_opped($channel, $nick);
+                grant_mode($target, $channels->{lc($channel)}->{lc($target)}->{mask}, $channel);
+                # do the queue as soon as efficiently possible ;)
+                return undef;
+            }
+        } elsif ($mode eq "v") {
+            if (is_voiced($channel, $target)) {
+                qmc($channel, '-o', $nick) if is_opped($channel, $nick);
+                grant_mode($target, $channels->{lc($channel)}->{lc($target)}->{mask}, $channel);
+                # do the queue as soon as efficiently possible ;)
+                return undef;
+            }
+        }
+    } elsif ($hdr->{_cc_} eq "kick") {
+        my ($channel, $target, $nick, $mask) = ($event->{args}->[0], $event->{to}->[0], $event->nick, $event->from);
+        print "$channel, $target, $nick, $mask\n";
+        if (is_opped($channel, $target)) {
+            qmc($channel, '-o', $nick) if is_opped($channel, $nick);
+            return undef;
+        } elsif (is_voiced($channel, $target)) {
+            qmc($channel, '-o', $nick) if is_opped($channel, $nick);
+            return undef;
+        }
+    }
+    return undef;
+}

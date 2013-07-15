@@ -1,0 +1,34 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:spellcheck
+{
+    my ($self, $event, $args) = @_;
+    use Lingua::Ispell qw(spellcheck);
+
+    my @words = spellcheck($args);
+
+    if (scalar(@words) == 0) {
+        $self->privmsg($event->to->[0], "$args contains no mis-spelled words!");
+        return;
+    }
+
+    foreach my $wh (@words) {
+        my $guesses;
+        my $i = 0;
+        for (@{$wh->{misses}}) {
+            ++$i;
+            if ($i == ($#{$wh->{misses}} + 1)) {
+                $guesses .= "\"$_\"";
+            } else {
+                $guesses .= "\"$_\", ";
+            }
+        }
+        if ($guesses) {
+            $self->privmsg($event->to->[0], "$wh->{term} mis-spelled! Suggestions: $guesses");
+        } else {
+            $self->privmsg($event->to->[0], "$wh->{term} is so wack i cant even think of any suggestions!");
+        }
+    }
+}

@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+
+<tinyurl_config version="1.0" tinyurl_version="0.01">
+    <shorten_length>60</shorten_length>
+    <dont_listen_in>#jeekissues</dont_listen_in>
+</tinyurl_config>

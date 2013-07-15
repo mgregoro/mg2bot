@@ -1,0 +1,165 @@
+;;mg2bot plugin file;;
+# a plugin made to honor the bot rydia
+# $Id: rydia 251 2008-03-13 18:27:29Z corrupt $
+dv:0.61
+v:0.01
+c:pub_last,public,priv_last
+n:rydia
+s:no syntax - starts on load
+t:autostart
+p:11
+h:plugin to emulate the infamous rydia
+a:mikey g, mg2bot addon plugin
+{
+    my ($self, $event) = @_;
+
+    if ($self eq "start") {
+        my ($t_num, $r_num) = (0, 0);
+        $plugins_data{rydia}->{unloaded} = 0;
+        print "[rydia]: Startup...\n";
+        open(DATA, "data/rydia_triggers.txt") or warn "[error]: Can't open data/rydia_triggers.txt: $!\n";
+        while (my $line = <DATA>) {
+            chomp($line);
+            push (@{$plugins_data{rydia}->{triggers}}, $line);
+            ++$t_num;
+        }
+        close(DATA);
+        open(DATA, "data/rydia_responses.txt") or warn "[error]: Can't open data/rydia_responses.txt: $!\n";
+        while (my $line = <DATA>) {
+            chomp($line);
+            push(@{$plugins_data{rydia}->{responses}}, $line);
+            ++$r_num;
+        }
+        close(DATA);
+        print "[rydia]: Loaded $t_num triggers and $r_num responses.\n";
+        add_scheduled_event('rydia_cleanup', 900 * (1 / $tick_length), sub { @{$plugins_data{rydia}->{used_responses}} = (); });
+        return 1;
+    } elsif ($self eq "stop") {
+        return 1 if $plugins_data{rydia}->{unloaded};
+        my ($t_num, $r_num) = (0, 0);
+        open(DATA, ">data/rydia_triggers.txt") or warn "[error]: Can't open data/rydia_triggers.txt for writing: $!\n";
+        foreach my $line (@{$plugins_data{rydia}->{triggers}}) {
+            print DATA "$line\n";
+            ++$t_num;
+        }
+        close(DATA);
+        open(DATA, ">data/rydia_responses.txt") or warn "[error]: Can't open data/rydia_responses.txt for writing: $!\n";
+        foreach my $line (@{$plugins_data{rydia}->{responses}}) {
+            print DATA "$line\n";
+            ++$r_num;
+        }
+        close(DATA);
+        print "[rydia]: Saved $t_num triggers and $r_num responses.\n";
+        $plugins_data{rydia}->{unloaded} = 1;
+        @{$plugins_data{rydia}->{responses}} = ();
+        @{$plugins_data{rydia}->{triggers}} = ();
+        @{$plugins_data{rydia}->{used_responses}} = ();
+        remove_scheduled_event('rydia_cleanup');
+        return 1;
+    }
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+
+    if ($hdr->{_cc_} eq "public" and is_master($event->from)) {
+        $arg =~ s/^\S+\s+(.+)$/$1/g;
+        my ($command, $string) = split(/\s+/, $arg, 2);
+        if ($command eq "write") {
+            my ($t_num, $r_num) = (0, 0);
+            open(DATA, ">data/rydia_triggers.txt") or warn "[error]: Can't open data/rydia_triggers.txt for writing: $!\n";
+            foreach my $line (@{$plugins_data{rydia}->{triggers}}) {
+                print DATA "$line\n";
+                ++$t_num;
+            }
+            close(DATA);
+            open(DATA, ">data/rydia_responses.txt") or warn "[error]: Can't open data/rydia_responses.txt for writing: $!\n";
+            foreach my $line (@{$plugins_data{rydia}->{responses}}) {
+                print DATA "$line\n";
+                ++$r_num;
+            }
+            close(DATA);
+            print "[rydia]: Saved $t_num triggers and $r_num responses.\n";
+            return undef;
+        } elsif ($command eq "trigger") {
+            if ($string =~ /^\s*$/) {
+                $self->privmsg($reply_to, "Please don't use empty triggers.  Thats just plain wrong.");
+                return undef;
+            }
+            my $check;
+            foreach my $line (@{$plugins_data{rydia}->{triggers}}) {
+                if ($line eq $string) {
+                    $check = 1;
+                } 
+            }
+            if ($check) {
+                $self->privmsg($reply_to, "Sorry, $string is already listed as a trigger.");
+            } else {
+                push(@{$plugins_data{rydia}->{triggers}}, $string);
+                $self->privmsg($reply_to, "$string added to triggers.");
+            }
+            return undef;
+        } elsif ($command eq "response") {
+            if ($string =~ /^\s*$/) {
+                $self->privmsg($reply_to, "Please don't use empty responses.  Thats just plain wrong.");
+                return undef;
+            }
+            my $check;
+            foreach my $line (@{$plugins_data{rydia}->{responses}}) {
+                if ($line eq $string) {
+                    $check = 1;
+                } 
+            }
+            if ($check) {
+                $self->privmsg($reply_to, "Sorry, $string is already listed as a response.");
+            } else {
+                push(@{$plugins_data{rydia}->{responses}}, $string);
+                $self->privmsg($reply_to, "$string added to responses.");
+            }
+            return undef;
+        } else {
+            $self->privmsg($reply_to, "I'm sorry, I don't know the command $command.");
+            return undef;
+        }
+    } else {
+        my ($trig, $response);
+        foreach my $trigger (@{$plugins_data{rydia}->{triggers}}) {
+            if ($arg =~ /$trigger/i) {
+                $trig = 1;
+            }
+        }
+        if ($trig) {
+            if (scalar(@{$plugins_data{rydia}->{responses}}) eq scalar(@{$plugins_data{rydia}->{used_responses}})) {
+                $self->privmsg($reply_to, "I have NOTHING to say to you.");
+                return undef;
+            }
+            while (!$response) {
+                my $invrsp;
+                my $mrsp = @{$plugins_data{rydia}->{responses}}->[rand(scalar(@{$plugins_data{rydia}->{responses}}))];
+                foreach my $resp (@{$plugins_data{rydia}->{used_responses}}) {
+                    if ($resp eq $mrsp) {
+                        $invrsp = 1;
+                    }
+                }
+                next if $invrsp;
+                $response = $mrsp;
+            }
+            # 1 in 3 chance of success :P
+            if (rand(10) < 3) {
+                my $event_id = "$$" . time . "$reply_to";
+                add_scheduled_event('rydia_' . $event_id, int(rand(250)) * (1 / $tick_length), sub {
+                    $self->privmsg($reply_to, $response);
+                    remove_scheduled_event('rydia_' . $event_id);
+                });
+            }
+        }
+    }
+}

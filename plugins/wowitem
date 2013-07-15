@@ -1,0 +1,245 @@
+;;mg2bot plugin file;;
+# $Id: wowitem 241 2007-08-03 18:19:54Z corrupt $
+dv:0.61
+v:0.01
+c:public,caction,jabber,private,console,pub_last
+n:wowitem
+s:wowitem [Item] | Item | ItemId
+h:the wow item lookuper plugin
+r:XML::Simple,LWP::UserAgent,HTTP::Request,String::IRC
+a:mikey g
+al:wi,item
+{
+    my ($self, $event, $args) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # set up useragent
+    my $ua = LWP::UserAgent->new;
+
+    # handle the random cases
+    if ($hdr->{_cc_} eq "pub_last" or $hdr->{_cc_} eq "caction") {
+        my ($arg) = $event->args;
+        if ($arg =~ /\[([^\]]+)\]/) {
+            $args = $1;
+        } else {
+            $args = undef;
+        }
+    } else {
+        if ($args =~ /\[([^\]]+)\]/) {
+            $args = $1;
+        }
+    }
+
+    if ($args) {
+        # check cache first!
+        my $pxml = ${$plugins_data{wowitem}->{cache}->{$args}};
+
+        unless ($pxml) {
+            # handle the random cases
+            if ($hdr->{_cc_} eq "pub_last") {
+                if ($event->args =~ /\[([^\]]+)\]/) {
+                    $args = $1;
+                }
+            }
+
+            if ($args =~ /^\d+$/) {
+                my $req = HTTP::Request->new(GET        =>          "http://www.wowhead.com/?item=$args&xml");
+                my $res = $ua->request($req);
+        
+                unless ($res->content =~ /Item not found/) {
+                    $pxml = XMLin($res->content);
+                     $plugins_data{wowitem}->{cache}->{$args} = \$pxml;
+                }
+            } else {
+                my $req = HTTP::Request->new(GET        =>          "http://www.wowhead.com/?search=$args");
+                my $res = $ua->request($req);
+
+                my $item_id;
+                if ($res->content =~ /Wowhead Search/) {
+                    # get the first item.
+                    ($item_id) = $res->content =~ /listview-void"><a href="\/\?item=(\d+)/;
+                } else {
+                    ($item_id) = $res->content =~ /typeId:\s*(\d+)/;
+                }
+        
+                # now we get the xml!
+                my $req = HTTP::Request->new(GET        =>          "http://www.wowhead.com/?item=$item_id&xml");
+                my $res = $ua->request($req);
+        
+                unless ($res->content =~ /Item not found/) {
+                    $pxml = XMLin($res->content);
+                    $plugins_data{wowitem}->{cache}->{$args} = \$pxml;
+                    $plugins_data{wowitem}->{cache}->{$item_id} = \$pxml;
+                }
+            }
+        }
+
+        if ($pxml) {
+            # we have XML :)
+            my $name;
+            unless ($hdr->{_cc_} eq "jabber") {
+                $name = String::IRC->new("[" . $pxml->{item}->{name} . "]");
+                if ($pxml->{item}->{quality}->{id} == 4) {
+                    $name->purple;
+                } elsif ($pxml->{item}->{quality}->{id} == 3) {
+                    $name->blue->bold;
+                } elsif ($pxml->{item}->{quality}->{id} == 2) {
+                    $name->green->bold;
+                } elsif ($pxml->{item}->{quality}->{id} == 1) {
+                    $name->white;
+                } elsif ($pxml->{item}->{quality}->{id} == 0) {
+                    $name->grey;
+                } elsif ($pxml->{item}->{quality}->{id} == 4) {
+                    $name->orange;
+                } elsif ($pxml->{item}->{quality}->{id} == 5) {
+                    $name->red;
+                }
+            } else {
+                $name = "[" . $pxml->{item}->{name} . "]";
+            }
+ 
+            my $item;
+
+            # define a few things
+            $item->{quality} = lc($pxml->{item}->{quality}->{content});
+            $item->{type} = lc($pxml->{item}->{inventorySlot}->{content});
+            $item->{level} = lc($pxml->{item}->{level});
+            $item->{name} = lc($pxml->{item}->{name});
+            $item->{class} = lc($pxml->{item}->{class}->{content});
+            $item->{subclass} = lc($pxml->{item}->{subclass}->{content});
+            ($item->{armor_type}) = $item->{subclass} =~ /(\w+) armor/;
+
+            # here we parse stats
+            my $ttxt = $pxml->{item}->{htmlTooltip};
+            $ttxt =~ s/\&nbsp;/ /g;
+
+            if ($ttxt =~ /(\+|-)(\d+) Stamina/) {
+                $item->{sta} = [$1, $2];
+            }
+
+            if ($ttxt =~ /(\+|-)(\d+) Agility/) {
+                $item->{agi} = [$1, $2];
+            }
+
+            if ($ttxt =~ /(\+|-)(\d+) Intellect/) {
+                $item->{int} = [$1, $2];
+            }
+
+            if ($ttxt =~ /(\+|-)(\d+) Spirit/) {
+                $item->{spi} = [$1, $2];
+            }
+
+            ($item->{req_level}) = $ttxt =~ /Requires Level (\d+)/;
+
+            foreach ($ttxt =~ /(Equip: [^\<]+)/g) {
+                push(@{$item->{extra}}, $_);
+
+                if ($_ =~ /Increases damage and healing [^\d]+(\d+)/) {
+                    $item->{spell_dmg} = ["+", $1];
+                    $item->{healing} = ["+", $1];
+                } elsif ($_ =~ /Improves spell haste [^\d]+(\d+)/) {
+                    $item->{haste} = ["+", $1];
+                } elsif ($_ =~ /Restores (\d+) mana per (\d+)/) {
+                    $item->{"mp$2"} = ["+", $1];
+                } elsif ($_ =~ /Improves your resilience [^\d]+(\d+)/) {
+                    $item->{resil} = ["+", $1];
+                } elsif ($_ =~ /Increases healing done [^\d]+(\d+) and damage done[^\d]+(\d+)/) {
+                    $item->{healing} = ["+", $1];
+                    $item->{spell_dmg} = ["+", $2];
+                } elsif ($_ =~ /Improves spell critical [^\d]+(\d+)/) {
+                    $item->{spell_crit} = ["+", $1];
+                } elsif ($_ =~ /Increases damage done by (\w+) spells and [^\d]+(\d+)/) {
+                    my $spell_type = lc($1);
+                    $item->{"$spell_type\_spell_dmg"} = ["+", $2];
+                } elsif ($_ =~ /(?:Improves|Increases your) hit rating [^\d]+(\d+)/) {
+                    $item->{"hit_rating"} = ["+", $1];
+                } elsif ($_ =~ /(?:Improves|Increases your) critical strike rating [^\d]+(\d+)/) {
+                    $item->{"crit"} = ["+", $1];
+                } elsif ($_ =~ /Your attacks ignore (\d+) of your opponent's armor/) {
+                    $item->{"ignore_enemy_armor"} = $1;
+                } elsif ($_ =~ /attack power by (\d+)/) {
+                    $item->{"attack_power"} = ["+", $1];
+                } elsif ($_ =~ /Increases the radius of ([\w\s]+?) by (\d) (\w+)\./) {
+                    my $spells = lc($1);
+                    my $count = $2;
+                    my $measure = $3;
+                    foreach my $spell (split(/ and /, $spells)) {
+                        $spell =~ s/ /_/g;
+                        $item->{"$spell\_radius"} = ["+", "$count $measure"];
+                    }
+                } elsif ($_ =~ /Inflicts the will of the Ashbringer/) {
+                    $item->{will_of_ashbringer} = "for shizzle";
+                } elsif ($_ =~ /Increases mount speed by (\d+)/) {
+                    $item->{mount_speed} = ["+", $1 . "%"];
+                } elsif ($_ =~ /Each time you/) {
+                    ($item->{special_equip}) = $_ =~ /^Equip: (.+)$/;
+                    $item->{special_equip} = lc($item->{special_equip});
+                } elsif ($_ =~ /(\d+) Slot/) {
+                    $item->{slots} = $1;
+                } else {
+                    print "$_\n";
+                }
+            }
+
+            foreach ($ttxt =~ />(\w+) Socket/g) {
+                $item->{sockets}->{lc($_)}++;
+            }
+
+            if ($ttxt =~ /Use: ([^\(]+)\((\d+) (\w+) Cooldown/) {
+                push(@{$item->{extra}}, $1);
+                $item->{use} = lc($1);
+                $item->{cooldown} = lc("$2 $3");
+
+            }
+
+            my @statsline;
+
+            foreach my $key (sort {$a cmp $b} keys %$item) {
+                next if $key eq "extra" or $key eq "name" or $key eq "subclass" or $key eq "class" or $key eq "quality"
+                    or $key eq "level" or $key eq "use" or $key eq "special_equip" or $key eq "sockets";
+         
+                next unless $item->{$key};
+                if (ref($item->{$key}) eq "ARRAY") {
+                    my $ar = $item->{$key};
+                    push(@statsline, "$key: $$ar[0]$$ar[1]");
+                } else {
+                    push(@statsline, "$key: $item->{$key}");
+                }
+            }
+
+            print join(', ', @statsline) . "\n";
+
+            my $useline;
+            if ($item->{use}) {
+                $useline = " <USE[" . $item->{use} . "]>";
+            } elsif ($item->{special_equip}) {
+                $useline = " <EQUIP[" . $item->{special_equip} . "]>";
+            }
+
+            my @socketline;
+
+            if ($item->{sockets}) {
+                foreach my $key (sort {$a cmp $b} keys %{$item->{sockets}}) {
+                    push(@socketline, "$key: " . $item->{sockets}->{$key});
+                }
+            }
+
+            if (scalar(@socketline)) {
+                $self->privmsg($reply_to, "$name <STATS[ " . join(', ', @statsline) . " ]> <SOCKETS[ " . join(', ', @socketline) . " ]>$useline$socketline");
+            } else {
+                $self->privmsg($reply_to, "$name <STATS[ " . join(', ', @statsline) . " ]>$useline");
+            }
+        } else {
+            # we don't!
+            $self->privmsg($reply_to, "Item not found.  Please refine search or use a valid ItemID.") unless $hdr->{_cc_} eq "pub_last";
+        }
+    }
+}

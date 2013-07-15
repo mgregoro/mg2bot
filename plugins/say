@@ -1,0 +1,25 @@
+;;mg2bot plugin file;;
+dv:0.53
+v:0.40
+c:private,jabber,console
+n:say
+{
+    my ($self, $event, $args) = @_;
+
+    if (is_master($event->from) || $event->nick eq '*master') {
+        my ($chan, @argparts) = split(/\s+/, $args);
+        if ($chan =~ /^#/) {
+            if (im_in_channel($chan)) {
+                $self->privmsg($chan, "@argparts");
+            } else {
+                $self->privmsg($event->nick, "i'm not in that channel!");
+            }
+        } else {
+            # it's probably a person
+            $self->privmsg($chan, "@argparts");
+        }
+    } else {
+        $self->privmsg($event->nick, "You are not my master!");
+    }
+
+}

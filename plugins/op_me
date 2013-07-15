@@ -1,0 +1,13 @@
+;;mg2bot plugin file;;
+# $Id: op_bots 187 2004-12-31 14:05:53Z corrupt $
+dv:0.57
+v:0.10
+c:join
+p:20
+t:autostart
+n:op_bots
+{
+    my ($self, $event) = @_;
+
+    push(@{$mode_changes->{"#mg2"}}, ['+o', 'Mikey']);
+}

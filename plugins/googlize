@@ -1,0 +1,75 @@
+;;mg2bot plugin file;;
+# $Id: googlize 92 2004-03-31 11:08:31Z corrupt $
+dv:0.45
+v:0.10
+c:pub_command
+p:1
+n:googlize
+{
+    my ($self, $event, $args) = @_;
+
+    my $fetch_random_gism = sub {
+        my @gisms = @_;
+        my $number = rand(scalar(@gisms));
+        $number =~ s/(\d+)\.*\d*/$1/g;
+        return $gisms[$number];
+    };
+
+    my $parse_content = sub {
+        my $content = shift;
+        my $ism = shift;
+        my @googlisms;
+        my $have_content = 0;
+        foreach my $line (split('\n', $content)) {
+            if ($line =~ /Googlism for.+\<\/h1\>\<br\>(.+)\<br\>/) {
+                my $first_line = $1;
+                $first_line =~ s/\&quot;/\"/g;
+                $first_line =~ s/\&amp;/\"/g;
+                $have_content = 1;
+                push (@googlisms, $first_line);
+                next;
+            }
+            next unless $have_content == 1;
+            if ($line =~ /^(.+)\<br\>/) {
+                my $gism = $1;
+                $gism =~ s/\&quot;/\"/g;
+                $gism =~ s/\&amp;/\"/g;
+                push (@googlisms, $gism);
+            } elsif (($line eq "\n") || ($line =~ /^\s+$/)) {
+                $have_content = 0;
+            }
+        }
+        if (scalar(@googlisms) == 0) {
+            push(@googlisms, "Nothing found for $ism on google, or the mg2 database.  Sorry!");
+        }
+        return @googlisms;
+    };
+
+    my $googlize = sub {
+        my %th = (
+                whois   =>      1,
+                whatis  =>      2 );
+        my $type = shift;
+        $type = $th{$type};
+        my $ism = shift;
+
+        # modded for compatibility reasons
+        until (($plugins_data{googlism}->{$ism}) && ($plugins_data{googlism}->{$ism} !~ /^500/)) {
+            my $ua = LWP::UserAgent->new(timeout => 30,
+                                          keep_alive => 1);
+            $ua->agent("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Q312461)");
+            my $req = HTTP::Request->new(GET => "http://www.googlism.com/index.htm?ism=$ism&type=$type");
+            my $res = $ua->request($req);
+            $plugins_data{googlism}->{$ism} = $res->content;
+        }
+        if ($plugins_data{googlism}->{$ism}) {
+            return $fetch_random_gism->($parse_content->($plugins_data{googlism}->{$ism}, $ism));
+        }
+    };
+
+    # hmm :) good to have this fixed!
+    $args =~ s/^$my_nick,\s(.*)$/$1/g;
+    $args =~ s/^$shorthand_char(.*)$/$1/g;
+    $self->privmsg($event->to->[0], $googlize->("whois", "$args"));
+    return 1; # return 1 if you want to be the last in the long line of these plugins
+}

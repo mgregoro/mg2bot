@@ -1,0 +1,38 @@
+;;mg2bot plugin file;;
+dv:0.57
+v:0.10
+c:mode
+p:20
+n:need_ops
+{
+    my ($self, $event) = @_;
+    if ($write_to_dbug) {
+        dbugr($event->dump2string);
+    }
+    my @args = $event->args;
+    my $chan = lc($event->to->[0]);
+    my ($type, $pos);
+    foreach my $char (split(//, $args[0])) {
+        if ($char eq "-") {
+            $type = "remove";
+            ++$pos unless $pos; # fixes null user bug on mode change
+                                # only increment the position if it's the first
+                                # if you don't you'll get a null user in the channel's hash
+            next;
+        } elsif ($char eq "+") {
+            $type = "add";
+            ++$pos unless $pos; # fixes null user bug on mode change
+            next;
+        }
+        if ($type eq "remove") {
+            if ($args[$pos]) {
+                if ($char eq "o") {
+                    if (($args[$pos] eq $my_nick) && (!botlink_is_queued('broadcast', 'op_bots ' . $chan . " $my_nick"))) {
+                        push(@$botlink_queue, ['broadcast', 'op_bots ' . $chan . " " . $my_nick]);
+                    }
+                }
+            }
+        }
+        ++$pos;
+    }
+}

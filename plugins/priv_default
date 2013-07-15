@@ -1,0 +1,89 @@
+;;mg2bot plugin file;;
+# $Id: priv_default 241 2007-08-03 18:19:54Z corrupt $
+dv:0.45
+v:0.10
+c:priv_last
+p:1
+n:priv_default
+{
+    my ($self, $event, $msg) = @_;
+    
+    if (is_master($event->from)) {
+        if ($msg eq "quit") {
+            print $event->from . " told me to quit.\n";
+            $self->quit($event->from . " told me to.");
+            $auto_reconnect = 0;
+            return 1;
+        } elsif ($msg eq "puboff") {
+            print "Mikey set public off.\n";
+            $self->add_handler('public', sub { print "someone said something but public os off!\n" });
+            $self->privmsg($event->nick, "Okay, public is off.");
+            return 1;
+        } elsif ($msg eq "pubon") {
+            print "Mikey turned public on.\n";
+            $self->add_handler('public', \&on_public);
+            $self->privmsg($event->nick, "Okay, public is on.");
+            return 1;
+        } elsif ($msg eq "listlevels") {
+            my $level_line;
+            foreach my $level (@allowed_levels) {
+                unless ($level_line) {
+                    $level_line = $level;
+                    next;
+                }
+                $level_line = $level_line . ", $level";
+            }
+            $self->privmsg($event->nick, "Allowed Levels for ops: $level_line");
+            return 1;
+        } elsif ($msg =~ /addlevel\s(\d+)/) {
+            my $new_level = $1;
+            push (@allowed_levels, $new_level);
+            $self->privmsg($event->nick, "Added $new_level to list of allowed levels.  Run reloadusers to refresh.");
+            return 1;
+        } elsif ($msg =~ /deletelevel\s(\d+)/) {
+            my $delete_level = $1;
+            my @ta = @allowed_levels;
+            undef @allowed_levels;
+            foreach my $ele (@ta) {
+                push (@allowed_levels, $ele) unless $ele eq $delete_level;
+            }
+            $self->privmsg($event->nick, "Deleted $delete_level from list of allowed levels.  Run reloadusers to refresh.");
+            return 1;
+        }
+    }
+    if ($msg eq "factoids") {
+        print $event->nick . " requesting list of factoids.\n";
+        my $i = 0;
+        my $factoid_line;
+        $self->privmsg($event->nick, "Beginning list of " . scalar(keys(%learned)) ." factoids...");
+        foreach my $key (keys %learned) {
+            ++$i;
+            if ($factoid_line eq "") {
+                $factoid_line = "\"$key\"";
+            } else {
+                $factoid_line = $factoid_line . ", \"$key\"";
+            }
+            if ($i == $factoids_per_line) {
+                $i = 0;
+                $self->privmsg($event->nick, "$factoid_line");
+                undef $factoid_line;
+            }
+        }
+        $self->privmsg($event->nick, "End list of factoids.");
+        return 1;
+    # the new shop!
+    } elsif (($msg =~ /^([0-9a-zA-Z\<\>\-\=\_\#\?\!\.]+)\s*(.*)$/) ||
+            ($msg =~ /^"([0-9a-zA-Z\<\>\-\=\s\_\#\?\!\.]+)\"\s*(.*)$/)) {
+        my $command = $1;
+        my $args = $2;
+        my $plugin = get_plugin("private", $command); # look for things in the "private" context, since we're the
+                                                          # "private" handler ;)
+
+        if ($plugin) {
+            #$self->privmsg("#mg2", $plugin->($args)); # perhaps we'll give $self to the plugins in the future
+            # the future is now!
+            $plugin->[0]->($self, $event, $args, $plugin->[1]);
+            return 1;
+        }
+    }
+}

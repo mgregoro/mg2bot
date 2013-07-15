@@ -1,0 +1,18 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,private
+n:relocalize
+{
+    my ($self, $event, $args) = @_;
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+    localize_mg2();
+
+    $self->privmsg($reply_to, "mg2 users relocalized.");
+    print "[relocalize]: mg2 users relocalized.\n";
+}

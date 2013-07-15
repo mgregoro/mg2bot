@@ -1,0 +1,157 @@
+<opt>
+  <user name="tony">
+    <givenname>Tony</givenname>
+    <country>USA</country>
+    <hostmask>*!tony@adsl-216-102-196-76.dsl.snfc21.pacbell.net</hostmask>
+    <hostmask>*!tony@lessthanthree.com</hostmask>
+    <level>10</level>
+    <user_profile>I AM POOR, SEND ME MONEY. KTHNX.</user_profile>
+    <sponsorname>root</sponsorname>
+  </user>
+  <user name="toby">
+    <givenname>toby (&lt;3)</givenname>
+    <country>USA</country>
+    <hostmask>*!toby@*.lqx.net</hostmask>
+    <level>50</level>
+    <user_profile>unf.</user_profile>
+    <sponsorname>toby</sponsorname>
+  </user>
+  <user name="kriss">
+    <givenname>kristine</givenname>
+    <country>hell</country>
+    <hostmask>*!kriss@ruht.ro</hostmask>
+    <level>50</level>
+    <user_profile>i will wreak havoc</user_profile>
+    <sponsorname>jebus</sponsorname>
+  </user>
+  <user name="mikeyg">
+    <givenname>Michael</givenname>
+    <country>USA</country>
+    <hostmask>*!mikeyg@oxygen.accs.wayne.edu</hostmask>
+    <hostmask>*!mikeyg@tq.accs.wayne.edu</hostmask>
+    <hostmask>*!mikeyg@mg2.org</hostmask>
+    <level>50</level>
+    <user_profile>HI i am mikey G.  I wrote the user system.  Contact me with errors and problems.</user_profile>
+    <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user name="deftekno">
+    <givenname>Brandon</givenname>
+    <country>United States</country>
+    <hostmask>*!sic@*DSL*.drenthe.com</hostmask>
+    <hostmask>*!~e@65.122.85.*</hostmask>
+    <level>10</level>
+    <user_profile>&lt;3 4 ( . Y . )</user_profile>
+    <sponsorname>root</sponsorname>
+  </user>
+  <user name="greg">
+    <givenname>Gregory</givenname>
+    <country>USA</country>
+    <hostmask>*!greg@oxygen.accs.wayne.edu</hostmask>
+    <level>1</level>
+    <sponsorname>sica</sponsorname>
+  </user>
+  <user name="sica">
+    <givenname>Trey</givenname>
+    <country>USA</country>
+    <hostmask>pcp438137pcs.ebrod01.ga.comcast.net</hostmask>
+    <level>10</level>
+    <sponsorname>root</sponsorname>
+  </user>
+  <user name="q">
+    <givenname>Nathan</givenname>
+    <country>USA</country>
+    <hostmask>*!q@wizardslab.net</hostmask>
+    <level>1</level>
+    <user_profile>I'm q. I do stuff.</user_profile>
+    <sponsorname>farming</sponsorname>
+  </user>
+  <user name="cent">
+    <givenname>Vincent</givenname>
+    <hostmask>*!~jeek@206.159.167.247.netsync.net</hostmask>
+    <level>1</level>
+    <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user name="benk">
+    <givenname>Ben</givenname>
+    <country>USA</country>
+    <hostmask>*!*@198-93-115-126.xdsl.qx.net</hostmask>
+    <level>1</level>
+    <user_profile>C++,ASP/(VB,C#), SQL/mssql/msde</user_profile>
+    <sponsorname>deftekno</sponsorname>
+  </user>
+  <user name="shaan">
+    <givenname>Shaan</givenname>
+    <country>USA</country>
+    <hostmask>*!*shaan*@adsl-215-66-109.bct.bellsouth.net</hostmask>
+    <hostmask>*!~shaan@*.se.biz.rr.com</hostmask>
+    <hostmask>*!shaan@*.se.biz.rr.com</hostmask>
+    <level>1</level>
+    <sponsorname>reflecks</sponsorname>
+  </user>
+  <user name="bmoody">
+    <givenname>Brian</givenname>
+    <country>USA</country>
+    <hostmask>*!~brian88lx@*.try.wideopenwest.com</hostmask>
+    <hostmask>*!bmoody@mg2.org</hostmask>
+    <level>1</level>
+    <user_profile>You know what it is...</user_profile>
+    <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user name="brandon">
+    <givenname>Brandon</givenname>
+    <country>USA</country>
+    <hostmask>*!brandon@mg2.org</hostmask>
+    <level>10</level>
+    <user_profile>Linux Ninja</user_profile>
+    <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user name="amelia">
+      <givenname>Amelia</givenname>
+      <country>USA</country>
+      <hostmask>*!~amelia@*.chi-lem.il.cable.rcn.com</hostmask>
+      <level>10</level>
+      <user_profile>AMELIA!@#!@$</user_profile>
+      <sponsorname>herself</sponsorname>
+  </user>
+  <user name="skorous">
+      <givenname>Marty</givenname>
+      <country>USA</country>
+      <hostmask>*!~ac4249@ajsmgmt4.grid.wayne.edu</hostmask>
+      <level>1</level>
+      <user_profile>10</user_profile>
+      <sponsorname>himself</sponsorname>
+  </user>
+  <user name="putnam">
+      <givenname>Putnam</givenname>
+      <country>USA</country>
+      <hostmask>*!~Putnam@droideka.cc.wayne.edu</hostmask>
+      <level>1</level>
+      <user_profile>10</user_profile>
+      <sponsorname>himself</sponsorname>
+  </user>
+  <user name="dkoy">
+      <givenname>Eric</givenname>
+      <country>USA</country>
+      <hostmask>*!~edau@141.217.4.160</hostmask>
+      <hostmask>*!eric@mg2.org</hostmask>
+      <level>10</level>
+      <user_profile>dotkom</user_profile>
+      <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user name="wicked">
+      <givenname>Craig</givenname>
+      <country>USA</country>
+      <hostmask>*!wicked@uniquefreak.org</hostmask>
+      <level>10</level>
+      <user_profile>captain of the n00bball team</user_profile>
+      <sponsorname>mikeyg</sponsorname>
+  </user>
+  <user name="aba">
+      <givenname>Andy</givenname>
+      <country>USA</country>
+      <hostmask>aba!aba@pimp.gimp</hostmask>
+      <level>1</level>
+      <user_profile>i luv u baby</user_profile>
+      <sponsorname>mikeyg</sponsorname>
+    </user>
+</opt>

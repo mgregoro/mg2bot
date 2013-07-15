@@ -1,0 +1,26 @@
+;;mg2bot plugin file;;
+# $Id: tick_length 130 2004-04-01 13:51:03Z corrupt $
+dv:0.58
+v:0.11
+c:public,private
+n:tick_length
+{
+    my ($self, $event, $args) = @_;
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    if (is_master($event->from)) {
+        if ($args =~ /^[\d\.]+$/) {
+            $args = sprintf('%.2f', $args);
+            $tick_length = $args;
+            $self->privmsg($reply_to, "tick_length set to $args.");
+        } else {
+            $self->privmsg($reply_to, "tick_length must be an int or a float.");
+        }
+    }
+}

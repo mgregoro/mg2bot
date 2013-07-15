@@ -1,0 +1,35 @@
+;;mg2bot plugin file;;
+# $Id: userinfo 173 2004-12-21 22:01:26Z corrupt $
+dv:0.45
+v:0.10
+c:public
+n:userinfo
+{
+    my ($self, $event, $args) = @_;
+
+    my %uD = get_all_user_data($args, $mg2bot_dir);
+    if (scalar(keys %uD) > 1) {
+        if ($uD{user_profile}) {
+            $self->privmsg($event->to->[0], "$args is: $uD{firstname} from $uD{country}.  Level: $uD{level}.  Sponsored by: $uD{sponsorname}. [$uD{user_profile}]");
+        } else {
+            $self->privmsg($event->to->[0], "$args is: $uD{firstname} from $uD{country}.  Level: $uD{level}.  Sponsored by: $uD{sponsorname}.");
+        }
+    } elsif (exists($channels->{$event->to->[0]}->{lc($args)})) {
+        if (my $user = mask_to_user($channels->{$event->to->[0]}->{lc($args)}->{mask})) {
+            my %uD = get_all_user_data($user, $mg2bot_dir);
+            if (scalar(keys %uD) > 1) {
+                if ($uD{user_profile}) {
+                    $self->privmsg($event->to->[0], "$user ($args) is: $uD{firstname} from $uD{country}.  Level: $uD{level}.  Sponsored by: $uD{sponsorname}. [$uD{user_profile}]");
+                } else {
+                    $self->privmsg($event->to->[0], "$user ($args) is: $uD{firstname} from $uD{country}.  Level: $uD{level}.  Sponsored by: $uD{sponsorname}.");
+                } 
+            } else {
+                $self->privmsg($event->to->[0], "Something's wrong.  $args resolves to mg2 user $user.");
+            }
+        } else {
+            print "$args didn't resolve to anything.\n";
+        }
+    } else {
+        $self->privmsg($event->to->[0], "$args isn't an mg2 user, go sign up! https://secure.mg2.org/cgi-bin/sponsorPicker.cgi");
+    }
+}

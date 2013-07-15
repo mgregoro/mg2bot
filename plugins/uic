@@ -1,0 +1,36 @@
+;;mg2bot plugin file;;
+dv:0.45
+v:0.10
+c:public,private
+n:uic
+{
+    my ($self, $event, $args) = @_;
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    if ($args !~ /^#/) {
+        $self->privmsg($reply_to, "$args is an invalid channel name.");
+        return;
+    }
+
+    my ($users, @u2);
+    if (exists($channels->{$args})) {
+        $users = $channels->{$args};
+        @u2;
+    } else {
+        $self->privmsg($reply_to, "I am not in channel $args.");
+        return;
+    }
+
+    foreach my $user (keys %$users) {
+        next if $user =~ /^\*/;
+        push (@u2, $channels->{$args}->{$user}->{nick});
+    }
+
+    $self->privmsg($reply_to, "Users in channel $args: " . join (', ', @u2));
+    
+}

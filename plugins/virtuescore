@@ -1,0 +1,40 @@
+;;mg2bot plugin file;;
+dv:0.61
+v:0.01
+c:public,private,jabber
+n:virtuescore
+s:virtuescore <email_address>
+p:11
+h:virtuemeter score plugin uses XML::Simple (should already be loaded for config parsing)
+r:LWP::Simple
+a:mikey g, mg2bot addon plugin
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    # take out the name if it starts with it, for "mg2bot, command" vs "+command"
+    my $name = $hdr->{n};
+    $arg =~ s/^$name //g;
+
+    use LWP::Simple;
+    my $pxml = XMLin(get('http://www.virtuemeter.com/score/xml/' . $arg . '/'));
+
+    if (ref($pxml) && $pxml->{vm_success}) {
+        $self->privmsg($reply_to, "$arg is $pxml->{vm_score_copy}, with a score of $pxml->{vm_score}");
+    } else {
+        $self->privmsg($reply_to, "$arg not found on virtuemeter.com.. Sign up!");
+    }
+
+}

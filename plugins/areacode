@@ -1,0 +1,45 @@
+;;mg2bot plugin file;;
+dv:0.61
+v:0.01
+c:public,private,jabber
+n:areacode
+s:no syntax - starts on load
+h:resolve area codes to places
+a:mikey g - inspired by code by eric dau
+al:ac
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    # take out the name if it starts with it, for "mg2bot, command" vs "+command"
+    my $name = $hdr->{n};
+    $arg =~ s/^$name //g;
+
+    my $html;
+    use LWP::Simple;
+    if ($plugins_data{areacode}->{html}) {
+        $html = $plugins_data{areacode}->{html};
+    } else {
+        $html = get('http://www.bennetyee.org/ucsd-pages/area.html');
+        $plugins_data{areacode}->{html} = $html;
+    }
+
+    my ($answer) = $html =~ /name="$arg">.+?<\/td><td>\s*(.+?)<\/td>/m;
+    $answer =~ s/<.+?\>//g;
+
+    if ($answer) {
+        $self->privmsg($reply_to, $answer);
+    }
+}

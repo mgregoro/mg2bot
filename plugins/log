@@ -1,0 +1,178 @@
+;;mg2bot plugin file;;
+# $Id: log 241 2007-08-03 18:19:54Z corrupt $
+dv:0.53
+v:0.10
+c:pub_last,topic,caction,join,kick,part,quit,nick
+n:log
+t:autostart
+p:10
+s:logs channels - no syntax - starts on load
+h:logs channels - no syntax - starts on load
+a:mikey g, base mg2bot plugin
+cf:conf/plugins/log.xml
+{
+    my ($self, $event) = @_;
+
+    # the log plugin
+    # noteworthy problem:
+    # the log isn't closed for that channel when you /part it, because
+    # there is no event for part triggered by the server for a self initiated
+    # /part.  one way to fix this would be to close the log file from the
+    # part plugin, but that would involve some heavy checks and a plugin
+    # dependency.  I figure for now, until we can come up with something
+    # better, it'd be okay to just let that filehandle sit open until the
+    # plugin is unloaded... or until the bot dies.  autoflush is on on all
+    # the file handles so the log files should be up to date no matter what
+    # happens.
+
+    # we need at least one context in which we can find this plugin.
+    my $pcontext = "pub_last";
+
+    # we also need the name of this plugin.
+    my $pname = "log";
+
+    my $timestamp = sub {
+        my @time = localtime(time);
+        if (shift) {
+            return sprintf('[%02d/%02d/%d %02d:%02d:%02d]', ($time[4] + 1), $time[3], ($time[5] + 1900), $time[2], $time[1], $time[0]);
+        } else {
+            return sprintf('[%02d:%02d:%02d]', $time[2], $time[1], $time[0]);
+        }
+    };
+
+    use FileHandle;
+    if ($self eq "start") {
+        print "[log]: Startup...\n";
+        foreach my $chan (keys %$channels) {
+            $chan = lc($chan);
+            if (exists($plugins_data{log}->{$chan})) {
+                my $fh = ${$plugins_data{log}->{$chan}};
+                print $fh "$chan.log stopped " . $timestamp->(1) . "\n";
+            }
+            my $fh = new FileHandle ">>" . $about_plugins->{$pcontext}->{$pname}->{cf}->{log_dir} . "$chan.log";
+            autoflush $fh 1;
+            $plugins_data{log}->{$chan} = $fh;
+            my $fh = ${$plugins_data{log}->{$chan}};
+            print $fh "$chan.log started " . $timestamp->(1) . "\n";
+        }
+        return 1;
+    } elsif ($self eq "stop") {
+        # should close filehandles
+        foreach my $chan (keys %{$plugins_data{log}}) {
+            my $fh = ${$plugins_data{log}->{$chan}};
+            print $fh "$chan.log stopped " . $timestamp->(1) . "\n";
+        }
+        delete $plugins_data{log};
+        return 1;
+    }
+    if (($self) && ($event)) {
+        return undef if $event->format eq "server";
+        if ($event->type eq "public") {
+            my $chan = lc($event->to->[0]);
+            $chan =~ s/^(?:@|\+)#(.+)$/#$1/g;
+            my $nick = $event->nick;
+            my @args = $event->args;
+            if (is_opped($chan, $nick)) {
+                $nick = '@' . $nick;
+            } elsif (is_voiced($chan, $nick)) {
+                $nick = '+' . $nick;
+            }
+            my $log_line = $timestamp->() . " <$nick> $args[0]\n";
+            my $fh = ${$plugins_data{log}->{$chan}};
+            print $fh $log_line;
+        } elsif ($event->type eq "caction") {
+            my $chan = lc($event->to->[0]);
+            return undef unless $chan =~ /^#/;
+            my $nick = $event->nick;
+            my @args = $event->args;
+            if (is_opped($chan, $nick)) {
+                $nick = '@' . $nick;
+            } elsif (is_voiced($chan, $nick)) {
+                $nick = '+' . $nick;
+            }
+            my $log_line = $timestamp->() . " * $nick $args[0]\n";
+            my $fh = ${$plugins_data{log}->{$chan}};
+            print $fh $log_line;
+        } elsif ($event->type eq "topic") {
+            my @args = $event->args;
+            my $chan = lc($event->to->[0]);
+            my $topic = $args[0];
+            my $nick = $event->nick;
+            if ($nick ne $irc_server[$current_server]) {
+                my $log_line = $timestamp->() . " *** $nick changes topic to `$topic`\n";
+                my $fh = ${$plugins_data{log}->{$chan}};
+                print $fh $log_line;
+            }
+        } elsif ($event->type eq "part") {
+            my $chan = lc($event->to->[0]);
+            my $userhost = $event->userhost;
+            my $nick = $event->nick;
+            my $log_line = $timestamp->() . " *** Parted $nick ($userhost)\n";
+            my $fh = ${$plugins_data{log}->{$chan}};
+            print $fh $log_line;
+        } elsif ($event->type eq "join") {
+            my $chan = lc($event->to->[0]);
+            my $userhost = $event->userhost;
+            my $nick = $event->nick;
+            my $log_line = $timestamp->() . " *** Joined $nick ($userhost)\n";
+            if ($nick eq $my_nick) {
+                my $fh = new FileHandle ">>" . $about_plugins->{$pcontext}->{$pname}->{cf}->{log_dir} . "$chan.log";
+                autoflush $fh 1;
+                $plugins_data{log}->{$chan} = $fh;
+                print $fh "$chan.log started " . $timestamp->(1) . "\n";
+            }
+            my $fh = ${$plugins_data{log}->{$chan}};
+            print $fh $log_line;
+        } elsif ($event->type eq "quit") {
+            my $nick = $event->nick;
+            my @args = $event->args;
+            my $reason = $args[0];
+            my $log_line = $timestamp->() . " *** $nick signoff: $reason\n";
+            foreach my $chan (keys %$channels) {
+                if ($nick eq $my_nick) {
+                    my $fh = ${$plugins_data{log}->{$chan}};
+                    print $fh $log_line;
+                    print $fh "$chan.log ended " . $timestamp->(1) . "\n";
+                    delete $plugins_data{log}->{$chan};
+                    next;
+                } 
+                next unless (is_uic($chan, $nick)); 
+                if (!$chan) {
+                    print "[logERROR]: variable \$chan not set!  Probably a null channel set.\n";
+                    return;
+                }
+                my $fh = ${$plugins_data{log}->{$chan}};
+                print $fh $log_line;
+            }
+        } elsif ($event->type eq "kick") {
+            my $nick = $event->to->[0];
+            my @args = $event->args;
+            my $kicker = $event->nick;
+            my $chan = lc($args[0]);
+            my $reason = $args[1];
+            my $log_line = $timestamp->() . " *** $nick was kicked by $kicker ($reason)\n";
+            if ($nick eq $my_nick) {
+                my $fh = ${$plugins_data{log}->{$chan}};
+                print $fh $log_line;
+                print $fh "$chan.log ended " . $timestamp->(1) . "\n";
+                delete $plugins_data{log}->{$chan};
+            } else {
+                my $fh = ${$plugins_data{log}->{$chan}};
+                print $fh $log_line;
+            }
+        } elsif ($event->type eq "nick") {
+            my @args = $event->args;
+            my $old_nick = $event->nick;
+            my $new_nick = $args[0];
+            my $log_line = $timestamp->() . " *** $old_nick is now known as $new_nick\n";
+            foreach my $chan (keys %$channels) {
+                next unless (is_uic($chan, $old_nick));
+                my $fh = ${$plugins_data{log}->{$chan}};
+                print $fh $log_line;
+            }
+        }
+    } 
+
+    # returning undef will ensure we are passive.
+    return undef;
+}

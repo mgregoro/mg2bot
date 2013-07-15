@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+
+use Digest::MD5 qw(md5_hex);
+
+my $welcome_msg = join(' ', @ARGV);
+
+my ($version, $chal);
+
+if ($welcome_msg =~ /^mg2 botlink v(\d+)\.(\d+) \[(.+)\]$/) {
+    $version = "$1.$2";
+    $chal = $3;
+    print "havesomepepsi$chal\n";
+    print "mg2bot3 [" . md5_hex("havesomepepsi$chal") . "]\n";
+}
+

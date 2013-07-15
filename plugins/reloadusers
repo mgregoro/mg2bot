@@ -1,0 +1,19 @@
+;;mg2bot plugin file;;
+dv:0.42
+v:0.10
+c:public,private
+n:reloadusers
+{
+    my ($self, $event, $args) = @_;
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+    if (is_master($event->from)) {
+        $mg2_users = fetch_local_users();
+        $self->privmsg($reply_to, "OK. Users reloaded.");
+        print "[reloadusers]: " . $event->nick . " reloaded users.\n";
+    }
+}

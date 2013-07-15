@@ -1,0 +1,99 @@
+;;mg2bot plugin file;;
+dv:0.61
+v:0.01
+c:pub_last
+n:learn_passive
+s:you dont have to use me
+p:15
+h:teaches the bot things!
+a:mikey g, mg2bot core
+t:autostart
+r:Lingua::EN::Tagger
+{
+    my ($self, $event, $args) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+    if ($self eq "start" || $self eq "stop") {
+        untie(%learned);
+        tie(%learned, 'DB_File', "$mg2bot_dir/data/d.db");
+        return 1;
+    }
+
+    use Lingua::EN::Tagger;
+    my $p = Lingua::EN::Tagger->new();
+    my $tagged = $p->add_tags($args);
+    
+    my ($phrase, $pattern) = parse_tags($tagged);
+    
+    if ($pattern =~ /(jj)?(nns?)+vb(z|p)/) {
+        my ($key, $value, $replace) = phrase_parser($phrase);
+        $value = "$key $value";
+        print "Learning $key as '$value'\n";
+
+        unless(exists($learned{$key}) && !$replace) {
+            $learned{$key} = $value;
+            untie(%learned);
+            tie(%learned, 'DB_File', "$mg2bot_dir/data/d.db");
+        }
+    }
+
+    sub phrase_parser {
+        my ($phrase) =  @_;
+        my ($k, $v, $replace);
+        foreach my $word (@$phrase) {
+            if (!$k && !$v) {
+                if ($word->{tag} =~ /^(jj|nn)/) {
+                    $k .= $word->{word};
+                }
+            } elsif ($k && !$v) {
+                if ($word->{tag} =~ /^vb/) {
+                    $v .= $word->{word};
+                } else {
+                    if ($word->{tag} eq "pp") {
+                        $k .= $word->{word};
+
+                    } else {
+                        $k .= " " . $word->{word};
+                    }
+                }
+            } elsif ($k && $v) {
+                if ($word->{tag} eq "rb" && $word->{word} eq "only") {
+                    $replace = 1;
+                    next;
+                }
+                if ($word->{tag} eq "pp") {
+                    $v .= $word->{word};
+                } else {
+                    $v .= " " . $word->{word};
+                }
+            }
+        }
+    
+        return ($k, $v, $replace);
+    }
+
+    sub parse_tags {
+        my ($tagged) = @_;
+        my (@phrase, $pattern);
+        foreach my $word (split(/\s+/, $tagged)) {
+            if ($word =~ /^\<([a-z]+)\>([^\<]+)/) {
+                push(@phrase, {
+                        word        =>      $2,
+                        tag         =>      $1,
+                    }
+                );
+                $pattern .= $1;
+            } else {
+                push(@phrase, {
+                        word        =>      $word,
+                        tag         =>      'unk',
+                    }
+                );
+                $pattern .= $1;
+            }
+        }
+        return (\@phrase, $pattern);
+    }
+
+    return undef;
+}

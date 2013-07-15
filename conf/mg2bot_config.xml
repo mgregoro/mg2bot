@@ -1,0 +1,207 @@
+<?xml version="1.0"?>
+<!-- $Id: mg2bot_config.xml 235 2007-06-18 12:57:04Z mikeyg $ -->
+
+<mg2bot_config version="1.0" bot_version="0.62b">
+
+    <!-- Globals! -->
+    <global>
+        <!-- must be a fully qualified hostname or an ip assigned to this box! you only have to use it
+             if you can't get the bot to work..     -->
+        <localaddr>216.150.225.244</localaddr>
+
+        <!-- use the built in httpd for bot configuration (and other stuff) ? -->
+        <httpd_server>1</httpd_server>
+
+        <!-- replaces write_to_debug.  requires modified version of Net::IRC -->
+        <write_to_debug>0</write_to_debug>
+
+        <!-- the directory in which the mg2bot resides -->
+        <mg2bot_dir>/mg2root/home/mikeyg/mg2bot-svn</mg2bot_dir>
+
+        <!-- the allowed levels array.  the levels allowed! -->
+        <op_level>1</op_level>
+        <op_level>10</op_level>
+        <op_level>50</op_level>
+
+        <!-- plugins loaded on startup -->
+        <loaded_on_startup>
+
+            <!-- removed from default list because of dependencies
+            <plugin>age</plugin>
+            <plugin>spellcheck</plugin>
+            <plugin>weather</plugin>
+            <plugin>price</plugin>
+            <plugin>wsversion</plugin>
+            <plugin>googlize</plugin>
+            <plugin>learn</plugin>
+            <plugin>unlearn</plugin>
+            <plugin>switchdb</plugin>
+            -->
+            <plugin>listplugins</plugin>
+            <plugin>gibberish</plugin>
+            <plugin>dance</plugin>
+            <plugin>plugininfo</plugin>
+            <plugin>reloadusers</plugin>
+            <plugin>userinfo</plugin>
+            <plugin>wsversion</plugin>
+            <plugin>flip</plugin>
+            <plugin>dict</plugin>
+            <plugin>uptime</plugin>
+            <plugin>status</plugin>
+            <plugin>uname</plugin>
+            <plugin>channels</plugin>
+            <plugin>you</plugin>
+            <plugin>relocalize</plugin>
+            <plugin>log_to_db</plugin>
+            <plugin>random_quote</plugin>
+            <plugin>bans</plugin>
+            <plugin>is_word</plugin>
+     	    <plugin>say</plugin>
+            <plugin>uic</plugin>
+            <plugin>typo</plugin>
+            <plugin>change_shorthand</plugin>
+            <plugin>calc</plugin>
+            <plugin>karma</plugin>
+            <plugin>tinyurl</plugin>
+            <plugin>attabot</plugin>
+            <plugin>wake</plugin>
+            <plugin>mem</plugin>
+            <plugin>plugin</plugin>        
+            <plugin>catchall_priv</plugin>
+            <plugin>8ball</plugin>
+            <plugin>priv_default</plugin>
+            <plugin>rand_ip</plugin>
+            <plugin>join</plugin>
+            <plugin>part</plugin>
+            <plugin>op_bots</plugin>
+            <plugin>need_ops</plugin>
+            <plugin>watch_for_bots</plugin>
+            <plugin>log</plugin>
+        </loaded_on_startup>
+
+        <!--
+        <botlink_relationship>
+            <nick>mg2bot2</nick>
+            <my_token>havesomecoke</my_token>
+            <their_token>havesomepepsi</their_token>
+            <mask>mg2bot2!mikeyg@im.one.of.the.good.guys</mask>
+            <initiate>1</initiate>
+        </botlink_relationship>
+        -->
+
+        <botlink_relationship>
+            <nick>moodybot</nick>
+            <their_token>we3pmmga3</their_token>
+            <my_token>adbq4531n</my_token>
+            <mask>moodybot!~mikeyg@newt.cc.wayne.edu</mask>
+            <initiate>0</initiate>
+        </botlink_relationship>
+
+        <!-- the bot's nick -->
+        <my_nick>mg2bot</my_nick>
+
+        <!-- the bot's irc name -->
+        <irc_name>mg2bot.  the bot for mg2.org!</irc_name>
+
+        <!-- irc server to connect to -->
+        <irc_server>irc.wh.verio.net</irc_server>
+        <irc_server>irc.foxlink.net</irc_server>
+        <irc_server>irc.blessed.net</irc_server>
+        <irc_server>irc.easynews.com</irc_server>
+        <irc_server>irc.umich.edu</irc_server>
+        <irc_server>irc.avalonworks.ca</irc_server>
+
+        <!-- should the bot auto reconnect ? -->
+        <auto_reconnect>1</auto_reconnect>
+
+        <!-- average number of seconds that comprise a schedule tick -->
+        <tick_length>1</tick_length>
+
+        <!-- ping timeout in ticks -->
+        <ping_timeout>2000</ping_timeout>
+
+        <!-- the bot's shorthand character used in regex so must escape regex chars -->
+        <shorthand_char>\+</shorthand_char>
+
+        <!-- number of factoids to print per line -->
+        <factoids_per_line>20</factoids_per_line>
+
+        <!-- mg2bot database file name assume a mg2bot_dir prefix -->
+        <db_file>/data/d.db</db_file>
+
+        <!-- bot's masterss (mask) -->
+        <masters>Mikey_!mikeyg@mg2.org</masters>
+        <masters>Mikey!mikeyg@mg2.org</masters>
+        <masters>Corrupt_!mikeyg@mg2.org</masters>
+        <masters>Corrupt!mikeyg@im.one.of.the.good.guys</masters>
+        <masters>Corrupt!mikeyg@im.one.of.the.bad.guys</masters>
+    </global>
+
+    <channel name="#mg2">
+        <!-- join channel at startup? -->
+        <autojoin>1</autojoin>
+
+        <!-- greet users as they come in? -->
+        <greet>1</greet>
+
+        <!-- op users as they come in? -->
+        <op_users>1</op_users>
+
+        <!-- kick users if banned? -->
+        <autokick>1</autokick>
+
+        <!-- channel masters? -->
+        <masters>Mikey!mikeyg@mg2.org</masters>
+    </channel>
+
+    <channel name="#startups">
+        <!-- join channel at startup? -->
+        <autojoin>1</autojoin>
+
+        <!-- greet users as they come in? -->
+        <greet>1</greet>
+
+        <!-- op users as they come in? -->
+        <op_users>1</op_users>
+
+        <!-- kick users if banned? -->
+        <autokick>1</autokick>
+
+        <!-- channel masters? -->
+        <masters>Mikey!mikeyg@mg2.org</masters>
+    </channel>
+    <!-- per channel configuration -->
+    <channel name="#praux">
+        <!-- join channel at startup? -->
+        <autojoin>1</autojoin>
+
+        <!-- greet users as they come in? -->
+        <greet>1</greet>
+
+        <!-- op users as they come in? -->
+        <op_users>1</op_users>
+
+        <!-- kick users if banned? -->
+        <autokick>1</autokick>
+
+        <!-- channel masters? -->
+        <masters>Mikey!mikeyg@mg2.org</masters>
+    </channel>
+    <!-- per channel configuration -->
+    <channel name="#mg2">
+        <!-- join channel at startup? -->
+        <autojoin>1</autojoin>
+
+        <!-- greet users as they come in? -->
+        <greet>1</greet>
+
+        <!-- op users as they come in? -->
+        <op_users>1</op_users>
+
+        <!-- kick users if banned? -->
+        <autokick>1</autokick>
+
+        <!-- channel masters? -->
+        <masters>Mikey!mikeyg@mg2.org</masters>
+    </channel>
+</mg2bot_config>

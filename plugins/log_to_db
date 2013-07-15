@@ -1,0 +1,138 @@
+;;mg2bot plugin file;;
+# $Id: log 201 2005-02-24 22:21:23Z corrupt $
+dv:0.53
+v:0.10
+c:pub_last,topic,caction,join,kick,part,quit,nick
+n:log_to_db
+p:10
+s:logs channels - no syntax - starts on load
+h:logs channels - no syntax - starts on load
+a:mikey g, logs to db :)
+cf:conf/plugins/log_to_db.xml
+{
+    my ($self, $event) = @_;
+
+    # the log plugin
+    # noteworthy problem:
+    # the log isn't closed for that channel when you /part it, because
+    # there is no event for part triggered by the server for a self initiated
+    # /part.  one way to fix this would be to close the log file from the
+    # part plugin, but that would involve some heavy checks and a plugin
+    # dependency.  I figure for now, until we can come up with something
+    # better, it'd be okay to just let that filehandle sit open until the
+    # plugin is unloaded... or until the bot dies.  autoflush is on on all
+    # the file handles so the log files should be up to date no matter what
+    # happens.
+
+    my $hdr = $_[$#_];
+
+    # we need at least one context in which we can find this plugin. (we actually don't)
+    my $pcontext = $hdr->{_cc_};
+
+    # we also need the name of this plugin. (we actually don't)
+    my $pname = $hdr->{n};
+
+    use DBI;
+    my $dbh = DBI->connect($hdr->{cf}->{dsn}, $hdr->{cf}->{username}, $hdr->{cf}->{password});
+
+    my $timestamp = sub {
+        my @time = localtime(time);
+        if (shift) {
+            return sprintf('[%02d/%02d/%d %02d:%02d:%02d]', ($time[4] + 1), $time[3], ($time[5] + 1900), $time[2], $time[1], $time[0]);
+        } else {
+            return sprintf('[%02d:%02d:%02d]', $time[2], $time[1], $time[0]);
+        }
+    };
+
+    my $log_to_db = sub {
+        my ($channel, $type, $nick, $data) = @_;
+        my $table = $hdr->{cf}->{table};
+        my $sth = $dbh->prepare(qq/
+            insert into $table
+                (channel, event_type, nick, data) 
+            values
+                (?, ?, ?, ?)
+            /);
+        return $sth->execute($channel, $type, $nick, $data);
+    };
+
+    if ($self eq "start") {
+        print "[log_to_db]: Startup...\n";
+        return 1;
+    } elsif ($self eq "stop") {
+        # should close filehandles
+        print "[log_to_db]: Shutdown...\n";
+        return 1;
+    }
+
+    if (($self) && ($event)) {
+        return undef if $event->format eq "server";
+        if ($event->type eq "public") {
+            my $chan = lc($event->to->[0]);
+            $chan =~ s/^(?:@|\+)#(.+)$/#$1/g;
+            my $nick = $event->nick;
+            my @args = $event->args;
+            if (is_opped($chan, $nick)) {
+                $nick = '@' . $nick;
+            } elsif (is_voiced($chan, $nick)) {
+                $nick = '+' . $nick;
+            }
+            $log_to_db->($chan, $event->type, $nick, $args[0]);
+        } elsif ($event->type eq "caction") {
+            my $chan = lc($event->to->[0]);
+            return undef unless $chan =~ /^#/;
+            my $nick = $event->nick;
+            my @args = $event->args;
+            if (is_opped($chan, $nick)) {
+                $nick = '@' . $nick;
+            } elsif (is_voiced($chan, $nick)) {
+                $nick = '+' . $nick;
+            }
+            $log_to_db->($chan, $event->type, $nick, $args[0]);
+        } elsif ($event->type eq "topic") {
+            my @args = $event->args;
+            my $chan = lc($event->to->[0]);
+            my $topic = $args[0];
+            my $nick = $event->nick;
+            if ($nick ne $irc_server[$current_server]) {
+                $log_to_db->($chan, $event->type, $nick, " *** $nick changes topic to `$topic`");
+            }
+        } elsif ($event->type eq "part") {
+            my $chan = lc($event->to->[0]);
+            my $userhost = $event->userhost;
+            my $nick = $event->nick;
+            $log_to_db->($chan, $event->type, $nick, " *** Parted $nick ($userhost)");
+        } elsif ($event->type eq "join") {
+            my $chan = lc($event->to->[0]);
+            my $userhost = $event->userhost;
+            my $nick = $event->nick;
+            if ($nick eq $my_nick) {
+                $log_to_db->($chan, $event->type, $nick, " *** I joined $chan!");
+            }
+            $log_to_db->($chan, $event->type, $nick, " *** Joined $nick ($userhost)");
+        } elsif ($event->type eq "quit") {
+            my $nick = $event->nick;
+            my @args = $event->args;
+            my $reason = $args[0];
+            $log_to_db->($chan, $event->type, $nick, " *** $nick signoff: $reason");
+        } elsif ($event->type eq "kick") {
+            my $nick = $event->to->[0];
+            my @args = $event->args;
+            my $kicker = $event->nick;
+            my $chan = lc($args[0]);
+            my $reason = $args[1];
+            $log_to_db->($chan, $event->type, $nick, " *** $nick was kicked by $kicker ($reason)");
+        } elsif ($event->type eq "nick") {
+            my @args = $event->args;
+            my $old_nick = $event->nick;
+            my $new_nick = $args[0];
+            foreach my $chan (keys %$channels) {
+                next unless (is_uic($chan, $old_nick));
+                $log_to_db->($chan, $event->type, $old_nick, " *** $old_nick is now known as $new_nick");
+            }
+        }
+    } 
+
+    # returning undef will ensure we are passive.
+    return undef;
+}

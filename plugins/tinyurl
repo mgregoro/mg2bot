@@ -1,0 +1,117 @@
+;;mg2bot plugin file;;
+dv:0.61
+v:0.01
+c:private,pub_last,jabber_last
+n:tinyurl
+s:msg bot tinyurl <chan> <url>
+p:11
+h:tinyurl - tinyurlifies a url said via msg
+a:mikey g
+r:LWP;
+cf:conf/plugins/tinyurl.xml
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+
+        # don't listen to channels we shouldn't.. and allow passthrough
+        my @dont_listen_in = split(/,/, $hdr->{cf}->{dont_listen_in});
+        foreach my $chan (@dont_listen_in) {
+            return undef if $chan eq lc($reply_to);
+        }
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    if ($hdr->{_cc_} eq "private") {
+        # the arguement can be pulled from the event
+        my ($arg) = $event->args;
+        my ($chan, $url);
+        $arg =~ s/^\S+\s+(.+)$/$1/g;
+        if ($arg =~ /^#/) {
+            # it should be a channel if it starts with a hash
+            ($chan, $url) = split(/\s+/, $arg, 2);
+
+            unless ($url =~ /^http[s]*\:\/\//) {
+                $self->privmsg($reply_to, "Im being strict here, url must start with http:// (or https://)");
+                return 1;
+            }
+
+            if (im_in_channel($chan)) {
+                use LWP;
+
+                # set up useragent
+                my $ua = LWP::UserAgent->new;
+                $ua->agent("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Q312461)");
+
+                my $req = HTTP::Request->new(GET        =>      "http://tinyurl.com/create.php?url=$url");
+                my $res = $ua->request($req);
+
+                if ($res->content =~ /TinyURL was created/) {
+                    # we're good
+                    my ($tiny_url) = $res->content =~ /\<blockquote\>\<b\>(http:\/\/tinyurl\.com\/.+)\<\/b\>\<p\>/;
+                    my $title;
+                    if ($url =~ /(?:\.htm|\.html|\.php|\.jsp|\.asp|\.cgi|\/)$/) {
+                        $req = HTTP::Request->new(GET       =>      "$url");
+                        $res = $ua->request($req);
+                        ($title) = $res->content =~ /\<title\>(.+)\<\/title\>/i;
+                    }
+                    if ($title) {
+                        $self->privmsg($chan, "From " . $event->nick . ": $tiny_url - ($title)");
+                    } else {
+                        $self->privmsg($chan, "From " . $event->nick . ": $tiny_url");
+                    }
+                    return 1;
+                }
+            } else {
+                $self->privmsg($reply_to, "I'm not in channel $chan\n");
+                return 1;
+            }
+        } else {
+            $self->privmsg($reply_to, "Usage: tinyurl <chan> <url>\n");
+            return 1;
+        }
+    } elsif ($hdr->{_cc_} eq "pub_last" || $hdr->{_cc_} eq "jabber_last") {
+        my ($arg) = $event->args;
+        $arg =~ s/^\S+\s+(.+)$/$1/g;
+        if ($arg =~ /(http[s]*\:\/\/[\:\w\_\-\+\%\#\@\!\&\.\=\/\?\[\]\(\)\~\,\|]+)/) {
+            $url = $1;
+
+            # if it ends in a ?, strip it.
+            if ($url =~ /^(.+)\?$/) {
+                $url = $1;
+            }
+
+            # don't do tinyurl if we won't benefit - now a configured option
+            return undef if length($url) < $hdr->{cf}->{shorten_length}; 
+
+            # set up useragent
+            my $ua = LWP::UserAgent->new;
+            $ua->agent("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Q312461)");
+
+            my $req = HTTP::Request->new(GET        =>      "http://tinyurl.com/create.php?url=$url");
+            my $res = $ua->request($req);
+
+            if ($res->content =~ /TinyURL was created/) {
+                # we're good
+                my ($tiny_url) = $res->content =~ /\<blockquote\>\<b\>(http:\/\/tinyurl\.com\/.+)\<\/b\>/;
+                my $title;
+                if ($url =~ /(?:\.htm|\.html|\.php|\.jsp|\.asp|\.cgi|\/)$/) {
+                    $req = HTTP::Request->new(GET       =>      "$url");
+                    $res = $ua->request($req);
+                    ($title) = $res->content =~ /\<title\>(.+)\<\/title\>/i;
+                }            
+                if ($title) {
+                    $self->privmsg($reply_to, $event->nick . "'s url: $tiny_url - ($title)");
+                } else {
+                    $self->privmsg($reply_to, $event->nick . "'s url: $tiny_url");
+                }
+                return undef;
+            }
+        }
+    }
+}

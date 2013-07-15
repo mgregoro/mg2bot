@@ -1,0 +1,13 @@
+;;mg2bot plugin file;;
+dv:0.45
+v:0.10
+c:pub_command
+n:catchall_pub
+p:100
+{
+    my ($self, $event, $args) = @_;
+
+    $self->privmsg($event->to->[0], "I seriously don't know how to handle this.  I have issues.");
+    return 1;
+
+}

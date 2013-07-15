@@ -1,0 +1,36 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,jabber
+n:wsversion
+{
+    my ($self, $event, $args) = @_;
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+    use LWP::Simple;
+    use Net::SSLeay qw(get_https);
+
+    if ($args =~ /([\w\.]+):*(\d*)/) {
+        if ($2 eq "443") {
+            my ($p, $r, %h) = get_https($1, $2, '/');
+            if ($h{SERVER}) {
+                $self->privmsg($reply_to, "$h{SERVER}");
+            } else {
+                $self->privmsg($reply_to, "Your program is sane, just this method is wack.\n");
+            }
+            return;
+        } elsif ($2) {
+            my @sinfo = head("http://$1:$2");
+            $self->privmsg($reply_to, $sinfo[4]) if $sinfo[4];
+            return;
+        } else {
+            my @sinfo = head("http://$1");
+            $self->privmsg($reply_to, $sinfo[4]) if $sinfo[4];
+            return;
+        }
+    }
+}

@@ -1,0 +1,35 @@
+Version .41 was tested against ActiveState Perl 5.6.1.
+
+First of all, for win32 perl, you do not use CPAN. ActiveState has its
+own installer called "ppm" This is run from the command prompt. Within ppm,
+it behaves just like CPAN for installing perl modules.
+
+Required modules for basic ussage of the bot are as follows:
+
+Net::IRC
+DBI
+DBD::mysql
+DB_File
+
+Some plugins require their own specific modules, some are not available
+for ActiveState Perl.
+
+
+To get the bot running by itself, I needed to alter the code of d.pl in
+the following ways:
+
+
+Comment out the entire contents of fetch_mg2_users
+Comment out the alarm(); functions.
+Comment out the add_sheduled_even line in init_connection
+Comment out the dbugr funtion at the end of the file
+
+Obviously, the bot name, server, db info, etc must be altered.
+
+The core plugins work, change_shorthand, learn, unlearn, status, uptime, 
+listplugins. I will write updates here as more plugins are found to be 
+supported.
+
+The plugin mem doesnt work as of now.
+
+

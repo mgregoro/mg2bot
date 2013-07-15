@@ -1,0 +1,12 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:enc
+h:encodes/encrypts things
+s:enc (b64/hex/md5_hex/md5_b64/blowfish:key/bin).
+a:mg2bot base plugin
+{
+    my ($self, $event, $args) = @_;
+
+}

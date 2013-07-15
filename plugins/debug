@@ -1,0 +1,26 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+p:bans_subs/v0.23,user_scan/v1.31,user_subs/v0.01
+n:debug
+{
+    my ($self, $event, $args) = @_;
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    use Data::Dumper;
+    foreach my $line (split(/\n/, Dumper($channels))) {
+        if ($args) {
+            open(FILE, ">>debug/$args") or warn "[error]: can't open file debug/$args\n";
+            print FILE "[debug]: $line\n";
+        } else {
+            print "[debug]: $line\n";
+        }
+    }
+}

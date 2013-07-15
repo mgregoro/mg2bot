@@ -1,0 +1,90 @@
+;;mg2bot plugin file;;
+dv:0.61
+# $Id: jeekfortune 178 2004-12-23 10:52:18Z corrupt $
+v:0.05
+c:public,private
+n:jeekfortune
+s:no syntax - starts on load
+p:11
+r:LWP::Simple
+h:jeekfortune is elite
+a:mikey g, mg2bot addon plugin
+{
+    my ($self, $event) = @_;
+
+    use LWP::Simple;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    # data timeout in seconds
+    my $timeout = 3600;
+
+    # max length in bytes
+    my $maxlen = 260;
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    if ($arg) {
+        if (is_master($event->from)) {
+            if ($arg eq "status") {
+                $self->privmsg($reply_to, sprintf("%d items left in cache.  Cache age is %d seconds.  Cache will expire in %d seconds.",
+                scalar(@{$plugins_data{jeekfortune}->{cache}}), time - $plugins_data{jeekfortune}->{cache_time}, $plugins_data{jeekfortune}->{cache_time} + $timeout - time));
+                return 1;
+            } elsif ($arg eq "flushcache") {
+                @{$plugins_data{jeekfortune}->{cache}} = split('%', get("http://jeek.net/jeekfortune"));
+                $plugins_data{jeekfortune}->{cache_time} = time;
+                return 1;
+            }
+        }
+    }
+
+    if (exists($plugins_data{jeekfortune}->{cache})) {
+        if (scalar(@{$plugins_data{jeekfortune}->{cache}}) == 0) {
+            @{$plugins_data{jeekfortune}->{cache}} = split('%', get("http://jeek.net/jeekfortune"));
+            $plugins_data{jeekfortune}->{cache_time} = time;
+        } elsif (time > $plugins_data{jeekfortune}->{cache_time} + $timeout) {
+            @{$plugins_data{jeekfortune}->{cache}} = split('%', get("http://jeek.net/jeekfortune"));
+            $plugins_data{jeekfortune}->{cache_time} = time;
+        }
+    } else {
+        @{$plugins_data{jeekfortune}->{cache}} = split('%', get("http://jeek.net/jeekfortune"));
+        $plugins_data{jeekfortune}->{cache_time} = time;
+    }
+
+    my $fortune;
+    while (!$fortune) {
+        # no infinite loops please.
+        if (scalar(@{$plugins_data{jeekfortune}->{cache}}) == 0) {
+            @{$plugins_data{jeekfortune}->{cache}} = split('%', get("http://jeek.net/jeekfortune"));
+            $plugins_data{jeekfortune}->{cache_time} = time;
+        }
+        
+        # pull a new random number!
+        my $rnum = sprintf('%d', rand($#{$plugins_data{jeekfortune}->{cache}}));
+
+        # pull the fortune out
+        $fortune = ${$plugins_data{jeekfortune}->{cache}}[$rnum];
+
+        # THEN remove our selection!
+        @{$plugins_data{jeekfortune}->{cache}} = remove_index($rnum, @{$plugins_data{jeekfortune}->{cache}});
+
+        if (length($fortune) > $maxlen) {
+            # if it's over length, the index was still removed so we won't get that again!
+            undef $fortune; # make sure we keep looping
+        }
+    }
+    
+    foreach my $line (split(/[\r\n]+/, $fortune)) {
+        next unless ($line);
+        $self->privmsg($reply_to, $line);
+    }
+    return 1;
+}

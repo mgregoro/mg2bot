@@ -1,0 +1,20 @@
+now we need to track channel data in the channels hash.  i nominate
+*name as the convention.. since no irc nicks cant start with *.
+
+the data will be stored like this
+$channels{#mg2}->{*bans} = [ ban list ]
+$channels{#mg2}->{*ops} = [ list of opped users ]
+$channels{#mg2}->{*voice} = [ list of voiced users ]
+$channels{#mg2}->{*key} = channel key
+$channels{#mg2}->{*flags} = [ list of flags ]
+
+channels the bots join that are configured can have non-default
+information, but channels that aren't configured will have the default
+options.
+
+$channels{#mg2}->{*autojoin} = 1 || 0 - default: 0
+$channels{#mg2}->{*greet}    = 1 || 0 - default: 0
+$channels{#mg2}->{*op_users} = 1 || 0 - default: 0
+$channels{#mg2}->{*autokick} = 1 || 0 - default: 0
+$channels{#mg2}->{masters} = [ list of masters' masks ]
+

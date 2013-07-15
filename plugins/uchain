@@ -1,0 +1,57 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,private
+n:uchain
+{
+    my ($self, $event, $args) = @_;
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    use Net::LDAP;
+    my $ldap = Net::LDAP->new("ldaps://rem.mg2.org:636") or return;
+
+    $ldap->bind;
+
+    my $mesg = $ldap->search( base	=>		'dc=mg2,dc=org',
+    			      filter	=>		"uid=$args");
+    
+    my (@entries, $entry);
+    @entries = $mesg->all_entries;
+    if (scalar(@entries)) {
+    	$entry = $entries[0];
+    } else {
+        $self->privmsg($reply_to, "Bad input bro... bad... bad input.");
+    	return;
+    }
+    if ($entry->exists('userLevel')) {
+        my $level = $entry->get_value('userLevel');
+	    if ($level == 10) {
+	        $self->privmsg($reply_to, "{r}-" . $entry->get_value('uid') . "-{r}");
+	    } elsif ($level == 1) {
+            $self->privmsg($reply_to, "{1}" . $entry->get_value('uid') . "->{r}" .
+                       $entry->get_value('rls'));
+        } elsif ($level == 2) {
+            $self->privmsg($reply_to, "{2}" . $entry->get_value('uid') . "->{1}" .
+                       $entry->get_value('l1s') . "->{r}" . $entry->get_value('rls'));
+        } elsif ($level == 3) {
+            $self->privmsg($reply_to, "{3}" . $entry->get_value('uid') . "->{2}" . $entry->get_value('l2s') . "->{1}" .
+                       $entry->get_value('l1s') . "->{r}" . $entry->get_value('rls'));
+        } elsif ($level == 4) {
+            $self->privmsg($reply_to, "{4}" . $entry->get_value('uid') . "->{3}" . $entry->get_value('l3s') . "->{2}" . $entry->get_value('l2s') . "->{1}" .
+                       $entry->get_value('l1s') . "->{r}" . $entry->get_value('rls'));
+        } elsif ($level == 5) {
+            $self->privmsg($reply_to, "{5}" . $entry->get_value('uid') . "->{4}" . $entry->get_value('l4s') . "->{3}" . $entry->get_value('l3s') . "->{2}" .
+                       $entry->get_value('l1s') . "->{r}" . $entry->get_value('rls'));
+        } elsif ($level == 50) {
+            $self->privmsg($reply_to, "{a}-=" . $entry->get_value('uid') . "=-{a}");
+        } else {
+            $self->privmsg($reply_to, "No user level found for $args\n");
+        }
+    }
+}

@@ -1,0 +1,48 @@
+;;mg2bot plugin file;;
+dv:0.70
+v:0.01
+c:jabber
+n:ldap
+s:ldap <search string>
+p:11
+h:searches for ldap records that match your query
+a:mikey g, mg2bot addon plugin
+al:search
+r:wsuLDAP::Search
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    # take out the name if it starts with it, for "mg2bot, command" vs "+command"
+    my $name = $hdr->{n};
+    $arg =~ s/^$name //g;
+
+    my $response;
+
+    use wsuLDAP::Search;
+
+    my $search = wsuLDAP::Search->new({String   =>  $arg});
+    
+    $response .= "Found $search->{count} entries in $search->{search_time} seconds.\n";
+    
+    foreach my $ele (@{$search->{entries}}) {
+        $response .= "\n";
+        foreach my $attr (qw/UID EmailID cn Surname MailForwardingAddress Coll
+                            Dept Title TelephoneNumber MailHost/) {
+            $response .= sprintf("%-25s: %s\n", $attr, $ele->get_value($attr)) if $ele->get_value($attr);
+        }
+    }
+    $self->privmsg($reply_to, $response);
+}

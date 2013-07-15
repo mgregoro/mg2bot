@@ -1,0 +1,36 @@
+;;mg2bot plugin file;;
+dv:0.61
+v:0.01
+c:public
+n:dump_channels
+s:dump_channels <filename>
+p:11
+h:dumps the channels hash into an XML file
+a:mikey g, mg2bot addon plugin
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    my $xml_out = XMLout($channels);
+
+    unless (open(FILE, '>' . $arg)) {
+        $self->privmsg($reply_to, "Couldn't open file $arg: $!");
+        return undef;
+    }
+    print FILE $xml_out;
+    close(FILE);
+    $self->privmsg($reply_to, "Wrote " . length($xml_out) . " bytes to $arg.");
+    return undef;
+}

@@ -1,0 +1,95 @@
+;;mg2bot plugin file;;
+# $Id: karma 241 2007-08-03 18:19:54Z corrupt $
+dv:0.61
+v:0.01
+c:public,pub_last,jabber,jabber_last
+n:karma
+s:++word ++(word group) --word --(word group) word++ (word group)++
+p:9
+t:autostart
+h:the kerma plugin
+r:DB_File
+a:mikey g
+al:powerlevel
+{
+    my ($self, $event) = @_;
+
+    if ($self eq "start") {
+        print "[karma]: Startup...\n";
+        tie %{$plugins_data{karma}}, 'DB_File', "$mg2bot_dir/data/karma";
+        add_scheduled_event('karma_save', 900 * (1 / $tick_length), sub { untie %{$plugins_data{karma}}; tie %{$plugins_data{karma}}, 'DB_File', "$mg2bot_dir/data/karma"; });
+        return 1;
+    } elsif ($self eq "stop") {
+        untie %{$plugins_data{karma}};
+        remove_scheduled_event('karma_save');
+        return 1;
+    }
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    if ($hdr->{_cc_} eq "public" || $hdr->{_cc_} eq "jabber") {
+        # this is a call for one of our excellent elements...
+        my ($arg) = $event->args;
+        $arg =~ s/^\S+\s+(.+?)\s*$/$1/g;
+        $arg = lc($arg);
+
+        # so we can be called in the mg2bot, blah blah context
+        my @arg_words = split(/\s+/, $arg);
+        if ($arg_words[0] eq $hdr->{n}) {
+            $arg = join(' ', @arg_words[1..$#arg_words]);
+        }
+
+        if (exists($plugins_data{karma}->{$arg})) {
+            if ($plugins_data{karma}->{$arg} > 9000) {
+                $self->privmsg($reply_to, "IT'S OVER 9000!!!!!!");
+            } else {
+                $self->privmsg($reply_to, "karma for $arg: $plugins_data{karma}->{$arg}");
+            }
+        } else {
+            $self->privmsg($reply_to, "no karma found for $arg");
+        }
+        return 1;
+    } elsif ($hdr->{_cc_} eq "pub_last" || $hdr->{_cc_} eq "jabber_last") {
+        # this is just someone talking.. let's see if they gave anyone some karma..
+        my ($arg) = $event->args;
+        while ($arg =~ /(?:([\+\-]{2})\(([\w\s\:\']+)\)|\(([\w\s\:\']+)\)([\+\-]{2})|([\+\-]{2})([\w\:\']+)|([\w\'\:]+)([\+\-]{2}))/g) {
+            if ($1 && $2) {
+                next if lc($2) eq lc($event->nick);
+                if ($1 eq "++") {
+                    $plugins_data{karma}->{lc($2)}++;
+                } elsif ($1 eq "--") {
+                    $plugins_data{karma}->{lc($2)}--;
+                }
+            } elsif ($3 && $4) {
+                next if lc($3) eq lc($event->nick);
+                if ($4 eq "++") {
+                    $plugins_data{karma}->{lc($3)}++;
+                } elsif ($4 eq "--") {
+                    $plugins_data{karma}->{lc($3)}--;
+                } 
+            } elsif ($5 && $6) {
+                next if lc($6) eq lc($event->nick);
+                if ($5 eq "++") {
+                    $plugins_data{karma}->{lc($6)}++;
+                } elsif ($5 eq "--") {
+                    $plugins_data{karma}->{lc($6)}--;
+                } 
+            } elsif ($7 && $8) {
+                next if lc($7) eq lc($event->nick);
+                if ($8 eq "++") {
+                    $plugins_data{karma}->{lc($7)}++;
+                } elsif ($8 eq "--") {
+                    $plugins_data{karma}->{lc($7)}--;
+                } 
+            }
+        }
+        return undef;
+    }
+}

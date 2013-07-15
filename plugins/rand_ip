@@ -1,0 +1,32 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,jabber
+n:rand_ip
+{
+    my ($self, $event, $args) = @_;
+    
+    use Net::Ping;
+    use Socket;
+
+    my $p = Net::Ping->new();
+
+    my $ip;
+    for (my $i = 1; $i <= 4; ++$i) {
+        if ($ip) {
+            $ip .= "." . sprintf('%d', rand(256));
+        } else {
+            $ip = sprintf('%d', rand(256));
+        }
+    }
+    $ip .= " * " if $p->ping($ip);
+
+    my $iaddr = inet_aton($ip);
+    my $host = gethostbyaddr($iaddr, AF_INET);
+
+    if ($host) {
+        $ip .= "( $host )";
+    }
+
+    $self->privmsg($event->to->[0], "$ip");
+}

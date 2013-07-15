@@ -1,0 +1,23 @@
+# repalcement for rls.lib
+# cos i sux
+
+sub getAllUserData {
+    my ($user, $mg2bot_dir) = @_;
+    my %ud;
+    open(USERS, "$mg2bot_dir/data/users_file") or warn "Can't open users file $mg2bot_dir/data/users_file: $!\n";
+    while(<USERS>) {
+        next if $_ =~ /^#/;
+        chomp;
+        my ($username, $hostmask, $name, $level, $country, $sponsorname) = split(/:/);
+        if ($user =~ /^$username$/i) {
+            $ud{firstname} = $name;
+            $ud{sponsorname} = $sponsorname;
+            $ud{country} = $country;
+            $ud{level} = $level;
+            close(USERS);
+            return %ud;
+        }
+    }
+    close(USERS);
+    return undef;
+}

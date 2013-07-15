@@ -1,0 +1,76 @@
+;;mg2bot plugin file;;
+# $Id: op_bots 187 2004-12-31 14:05:53Z corrupt $
+dv:0.57
+v:0.10
+c:join
+p:20
+t:autostart
+n:op_bots
+{
+    my ($self, $event) = @_;
+
+    if ($self eq "start") {
+        my $code = sub {
+            my ($frombot, $type, $args) = @_;
+            my ($channel, $op_user, $error);
+
+            # debug info
+            #print "[botlink protocol debug]: FROM $frombot - TYPE $type - ARGS $args\n";
+
+            if ($args =~ /^([\#\w\^\|\]\[\_\`]+)\s([\w\^\|\]\[\_\`]+)(.*)$/) {
+                ($channel, $op_user, $error) = ($1, $2, $3);
+            } else {
+                print "[botlink]: invalid op_bots message '$args'\n";
+                return;
+            }
+
+            if ($error) {
+                print "[botlink]: $frombot couldn't op $op_user in $channel: $error\n";
+                return;
+            }
+
+            if (is_opped($channel, $my_nick)) {
+                # for debugging purposes
+                #print "[botlink]: honoring $frombot\'s request for ops in $channel.\n";
+                unless (mode_is_queued($channel, '+o', $op_user)) {
+                    # only op them if they're not opped....
+                    unless (is_opped($channel, $op_user)) {
+                        # we can only do this if we're in the frickin channel
+                        if (im_in_channel($channel)) {
+                            # I really should only do this once.  But here i'll do it again for good measure
+                            if (is_opped($channel, $my_nick)) {
+                                push(@{$mode_changes->{$channel}}, ['+o', $op_user]);
+                            } else {
+                                ++$plugins_data{op_bots}->{op_attempt};
+                                unless (botlink_is_queued('broadcast', "op_bots $channel $op_user")) {
+                                    push(@$botlink_queue, ['broadcast', 'op_bots ' . "$channel $op_user"]);
+                                }
+                            }
+                        }
+                    } else {
+                        # for debugging purposes
+                        #print "[botlink]: $op_user is already opped.  canceling op.\n";
+                    }
+                } 
+            } else {
+                ++$plugins_data{op_bots}->{op_attempt};
+                # no point in being so noisy
+                #$bl->send_message($frombot, "op_bots $channel $op_user I'm not opped in $channel.");
+                unless (botlink_is_queued('broadcast', "op_bots $channel $op_user")) {
+                    push(@$botlink_queue, ['broadcast', 'op_bots ' . "$channel $op_user"]);
+                }
+            }
+        };
+        $bl->add_handler('op_bots', $code);
+        return 1;
+    } elsif ($self eq "stop") {
+        # get em all.
+        $bl->del_handlers('op_bots');
+        return 1;
+    }
+
+    if ($event->nick eq $my_nick) {
+        print "[botlink]: broadcasting request for ops in " . $event->to->[0] . ".\n";
+        push(@$botlink_queue, ['broadcast', 'op_bots ' . $event->to->[0] . " " . $event->nick]);
+    }
+}

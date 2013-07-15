@@ -1,0 +1,27 @@
+writing an mg2bot plugin if you know perl and Net::IRC is easy!
+
+we hand you an $event and an $ic object.. and then you can do
+whatever you want with it.
+
+the format looks like this
+
+Note:
+the header must look exactly like this.. no spaces in anything at all.  the version
+numbers must be valid numbers!!! 
+
+
+the file needs to begin like this:
+
+;;mg2bot plugin file;;
+dv:req'd_mg2bot_version_number
+v:vnumber
+c:private or public
+n:name_of_plugin
+{
+# then code can follow
+# keep in mind it has to be within the curly braces.. and they are manditory
+# UNPACK YOUR VARS
+    my ($irc, $event, $args) = @_;
+    $irc->privmsg("$event->nick", "Thanks for telling me $args");
+# easy enough eh ;) ask if you have any questions
+}

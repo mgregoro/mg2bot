@@ -1,0 +1,41 @@
+this is a text file containing notes for my new advanced factfinding
+parser that will be a sexy plugin maybe one day.  this will be used to
+collect data from multiple sources similarily to googlism, but will be
+far more advanced.  We will take more data in, and return queries more
+reliably than googlism.   Anyways.  I'm going to write out a few
+sentences below to try and find a good harvesting algorithm.
+
+The cats are so cuddly.
+
+(?the?) cats = subject
+
+questions (all legal):
+
++cats <- shorthand question
+mg2bot, cats? <- longhand question
++cat <- shorthand question
+mg2bot, cat? <- longhand question
+
+acceptable answers:
+
+the cats are so cuddly.
+they are so cuddly. 
+cats are so cuddly. 
+
+How to parse this.. 
+
+We know that the word after "the" is typically a noun, and will want to
+be recorded as such.  Same goes for "a".  So we can parse for sentences
+or statements first.
+
+if ($string !~ /\./) {
+    # if there are no periods, treat the string as one statement.
+    if ($string =~ /^(the|a)\s(\w+)\s(\w+)\s([\w\s]+)/) {
+        # if the string starts with the or a, extract the first word
+        # then extract the second word, and finally the rest of the
+        # sentence.
+        my $subject = $2;
+        my $are = $3;
+        my $definition = $4;
+    }
+}

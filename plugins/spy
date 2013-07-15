@@ -1,0 +1,93 @@
+;;mg2bot plugin file;;
+#$Id: spy 214 2006-01-14 03:13:58Z corrupt $
+dv:0.61
+v:0.01
+c:pub_last,public
+n:spy
+s:no syntax - starts on load
+p:5
+h:spy plugin!
+a:mikey g, mg2bot addon plugin
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    # take out the name if it starts with it, for "mg2bot, command" vs "+command"
+    my $name = $hdr->{n};
+    $arg =~ s/^$name //g;
+
+    my $timestamp = sub {
+        my @time = localtime(time);
+        if (shift) {
+            return sprintf('[%02d/%02d/%d %02d:%02d:%02d]', ($time[4] + 1), $time[3], ($time[5] + 1900), $time[2], $time[1], $time[0]);
+        } else {
+            return sprintf('[%02d:%02d:%02d]', $time[2], $time[1], $time[0]);
+        }
+    };
+
+    if ($hdr->{_cc_} eq "public" and is_master($event->from)) {
+        if ($arg eq "cleanup") {
+            foreach my $victim (keys %{$plugins_data{spy}->{chans}}) {
+                #$self->part($victim);
+            }
+            $plugins_data{spy} = undef;
+            $self->privmsg($reply_to, "No longer spying on anyone...");
+        } else {
+            my ($src_chan, $dst_chan) = split(/\s+/, $arg, 2);
+            return undef if lc($src_chan) eq lc($dst_chan);
+            push(@{$plugins_data{spy}->{chans}->{$src_chan}}, $dst_chan);
+            # join the channels if we aren't there!
+            unless (im_in_channel(lc($src_chan))) {
+                $channels->{$src_chan}->{'*autojoin'} = $c->{channel}->{$src_chan}->{autojoin} ? $c->{channel}->{$src_chan}->{autojoin} : 0;
+                $channels->{$src_chan}->{'*greet'} = $c->{channel}->{$src_chan}->{greet} ? $c->{channel}->{$src_chan}->{greet} : 0;
+                $channels->{$src_chan}->{'*op_users'} = $c->{channel}->{$src_chan}->{op_users} ? $c->{channel}->{$src_chan}->{op_users} : 0;
+                $channels->{$src_chan}->{'*autokick'} = $c->{channel}->{$src_chan}->{autokick} ? $c->{channel}->{$src_chan}->{autokick} : 0;
+                $channels->{$src_chan}->{'*masters'} = $c->{channel}->{$src_chan}->{masters} ? $c->{channel}->{$src_chan}->{masters} : [ undef ]; 
+                print "[spy]: Joining $src_chan!\n";
+                $self->join($src_chan);
+            }
+            unless (im_in_channel(lc($dst_chan))) {
+                $channels->{$dst_chan}->{'*autojoin'} = $c->{channel}->{$dst_chan}->{autojoin} ? $c->{channel}->{$dst_chan}->{autojoin} : 0;
+                $channels->{$dst_chan}->{'*greet'} = $c->{channel}->{$dst_chan}->{greet} ? $c->{channel}->{$dst_chan}->{greet} : 0;
+                $channels->{$dst_chan}->{'*op_users'} = $c->{channel}->{$dst_chan}->{op_users} ? $c->{channel}->{$dst_chan}->{op_users} : 0;
+                $channels->{$dst_chan}->{'*autokick'} = $c->{channel}->{$dst_chan}->{autokick} ? $c->{channel}->{$dst_chan}->{autokick} : 0;
+                $channels->{$dst_chan}->{'*masters'} = $c->{channel}->{$dst_chan}->{masters} ? $c->{channel}->{$dst_chan}->{masters} : [ undef ]; 
+                print "[spy]: Joining $dst_chan!\n";
+                $self->join($dst_chan);
+            }
+            $self->privmsg($reply_to, "spying: $src_chan => $dst_chan");
+        }
+    } elsif ($hdr->{_cc_} eq "pub_last") {
+        foreach my $victim (keys %{$plugins_data{spy}->{chans}}) {
+            my $chan = lc($event->to->[0]);
+            if ($chan eq lc($victim)) {
+                $chan =~ s/^(?:@|\+)#(.+)$/#$1/g;
+                my $nick = $event->nick;
+                my ($data) = $event->args;
+                if (is_opped($chan, $nick)) {
+                    $nick = '@' . $nick;
+                } elsif (is_voiced($chan, $nick)) {
+                    $nick = '+' . $nick;
+                }
+                foreach my $dst_chan (@{$plugins_data{spy}->{chans}->{$victim}}) {
+                    $self->privmsg($dst_chan, "(spy: $chan) " . $timestamp->() . " <$nick> $data");
+                }
+            }
+        }
+        return undef;
+    } else {
+        print "Hi!\n";
+    }
+}

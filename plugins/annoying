@@ -1,0 +1,36 @@
+;;mg2bot plugin file;;
+dv:0.22
+v:0.02
+c:public
+n:annoying
+{
+    my $self = shift;
+    my $event = shift;
+    my $args = shift;
+
+    my $annoying_handler = sub {
+        my $self = shift;
+        my $event = shift;
+        my @args = $event->args;
+        my $msg = @args[0];
+        if (($msg =~ /return/) && (is_master($event->from))) {
+            $self->privmsg($event->to->[0], "Returning control to mg2bot proper.");
+            $self->add_handler("public", \&on_public);
+            return;
+        } else {
+            foreach my $key (keys %learned) {
+                if ($msg =~ /\s*$key\s*/i) {
+                    $self->privmsg($event->to->[0], "$learned{$key}");
+                    last;
+                } 
+            }
+        }
+    };
+
+    if ($args eq "become") {
+        $self->privmsg($event->to->[0], "Control passed to annoying handler.");
+        $self->add_handler("public", $annoying_handler);
+        return;
+    }
+    $self->privmsg($event->to->[0], "I can't annoy you unless you go mg2bot, annoying become");
+}

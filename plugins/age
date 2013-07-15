@@ -1,0 +1,83 @@
+;;mg2bot plugin file;;
+dv:0.55
+v:0.15
+c:public
+n:age
+r:Date::Manip
+a:tony c.
+{
+	use Date::Manip;
+	
+    my ($self, $event, $args) = @_;
+
+	$args =~ s/-/\//g;	
+
+	if ($args eq ""){
+		$self->privmsg($event->to->[0], "You need to give me something to work with!");
+		return;
+	}
+	
+	my @input = split (/ /, $args);
+
+	my $today = ParseDate("now");
+
+	my $argDate;
+	my $in = @input;
+	if (@input[-1] eq "detailed"){
+		$argDate = ParseDate("@input[0..$in - 2]");
+	} else {
+		$argDate = ParseDate("@input[0..$in - 1]");
+	}
+
+	if ($argDate eq ""){
+		$self->privmsg($event->to->[0], "I don't know what to do with that date, sorry :(");
+		return;
+	}
+
+	my $err;
+	my $myAge = DateCalc($argDate,$today,\$err,1);	
+
+	$myAge =~ s/\+//g;
+
+	my @detailedArray = split (/:/, $myAge);
+
+	@input[-1] =~ tr/A-Z/a-z/;
+	
+	my $output;
+
+	if (@input[-1] eq "detailed"){
+
+		if (@detailedArray[0] ne "0"){
+			$output .= "@detailedArray[0] yr, ";		
+		}
+		if (@detailedArray[1] ne "0"){
+			$output .= "@detailedArray[1] mth, ";
+		}
+		if (@detailedArray[2] ne "0"){
+			$output .= "@detailedArray[2] wk, ";
+		}
+		if (@detailedArray[3] ne "0"){
+			$output .= "@detailedArray[3] dy, ";
+		}
+		if (@detailedArray[4] ne "0"){
+			$output .= "@detailedArray[4] hr, ";
+		}
+		if (@detailedArray[5] ne "0"){
+			$output .= "@detailedArray[5] min, ";
+ 		}
+		if (@detailedArray[6] ne "0"){
+			$output .= "@detailedArray[6] sec";
+		}
+		$output =~ s/,\ $//g;		
+
+	} else {
+
+		my $old = &UnixDate($today,"%s") . "\n";
+		my $new = &UnixDate($argDate,"%s") . "\n";
+
+		$output =  ($old - $new) / (365.242 * 24 * 60 * 60);
+		$output =~ s/^(\d+\.\d{1,6})\d+/$1/g;
+		$output .= " years";
+	}
+		$self->privmsg($event->to->[0], $event->nick . ", It is $output old!");
+}

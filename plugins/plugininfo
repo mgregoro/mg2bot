@@ -1,0 +1,21 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,private,jabber
+n:plugininfo
+{
+    my ($self, $event, $args) = @_;
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+    if (plugin_loaded($args)) {
+        my $version = plugin_version($args);
+        my @contexts = find_contexts($args);
+        $self->privmsg($reply_to, "Plugin $args\[" . join(', ', @contexts) . "\]: v$version loaded and active.");
+    } else {
+        $self->privmsg($reply_to, "Plugin $args is not loaded.");
+    }
+}

@@ -1,0 +1,28 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,private
+n:bans
+s:bans <channel>
+{
+    my ($self, $event, $args) = @_;
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    if (!$args) {
+        $self->privmsg($reply_to, "Usage: bans <channel>");
+        return;
+    }
+    my @bans = get_channel_data($args, 'bans');
+    if ($bans[0]) {
+        $self->privmsg($reply_to, "Bans in channel $args: " . join(', ', @bans));
+    } else {
+        $self->privmsg($reply_to, "There are no bans in channel $args, or I am not in that channel.");
+    }
+
+}

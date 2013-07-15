@@ -1,0 +1,104 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public,private
+n:curr
+r:HTTP::Request,LWP::Simple,LWP::UserAgent,Number::Format
+a:Tony, www.lessthanthree.com
+{
+	my ($self, $event, $args) = @_;
+	
+	use HTTP::Request;
+	use LWP::Simple;
+	use LWP::UserAgent;	
+	use Number::Format;
+
+	  my $ency = new Number::Format(-thousands_sep   => ',',
+                              -decimal_point   => '.',
+                              -int_curr_symbol => '');
+
+    my $reply_to;
+        if ($event->to->[0] =~ /^#/) {
+            $reply_to = $event->to->[0];
+        } else {
+            $reply_to = $event->nick;
+        }
+
+if ($args ne ""){
+
+	my @args = split (/ /, $args);
+
+	my $ammount = @args[0];
+	my $from = 	@args[1];
+	my $to	= @args[2];
+	
+	#print "$args\n";	
+	#print "$ammount $from $to\n";
+
+	my $ua = LWP::UserAgent->new(timeout =>     30,
+                                 keep_alive =>  1);
+	$ua->agent("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Q312461)");
+	
+	my $req = HTTP::Request->new(GET => "http://finance.yahoo.com/m5?a=$ammount&s=$from&t=$to&c=0");
+	my $res = $ua->request($req);
+	
+	if ($res->content){ 
+		my $content = $res->content;
+		my $yescont = 1;	
+		
+		foreach my $line (split('\n', $content)) {
+    		
+			if ($line =~ /Exchange\ Rate/) {
+				
+            	my $fromline = $line;
+            	my $toline = $line;
+            	my $exline = $line;
+				my $dateline = $line;
+
+
+                $fromline =~ s/^.*Symbol\<\/th\>\<th\ align\=center\>//g;
+                $fromline =~ s/\<\/th\>\<th\ colspan\=2\ .*//g;
+
+                $toline =~ s/^.*Exchange\ Rate\<\/th\>\<th\ align\=center\>//g;
+                $toline =~ s/\<\/th\>\<th\ align\=center\>.*//g;
+
+                $dateline =~ s/^.*\<\/th\>\<th\ nowrap\>//g;
+                $dateline =~ s/\<\/th\>\<td\>.*//g;
+
+                $exline =~ s/^.*$from$to/$from$to/g;
+                $exline =~ s/^.*\<\/th\>\<td\>//g;
+                $exline =~ s/\<\/td\>\<td\>\<b\>.*$//g;
+
+                my $newcurr = $ammount * $exline;
+                $newcurr = (eval "$newcurr");
+
+				my $price_ammount = $ency->format_price($ammount);
+				my $price_newcurr = $ency->format_price($newcurr);
+				my $number_exline = $ency->format_number($exline, 3);
+
+					if ($toline ne "" && $fromline eq "") {
+						$self->privmsg($reply_to, "$from is not valid");
+					} elsif ($toline eq "" && $fromline ne "") {
+						$self->privmsg($reply_to, "$to is not valid");
+					} elsif ($toline eq "" && $fromline eq "") {
+						$self->privmsg($reply_to, "neither $from or $to are valid!");
+					} elsif ($toline ne "" && $fromline ne "") {
+                		$self->privmsg($reply_to, "$price_ammount $fromline(s) = $price_newcurr $toline(s) -- Rate of $number_exline as of $dateline");
+                	} else {
+						$self->privmsg($reply_to, "uh, wtf did you do to the code!?");
+					}
+                #print "\$$ammount $from in $to is equal to \$$newcurr\n"; 
+			}
+		next;
+		
+		}
+	} else {
+		
+		$self->privmsg($reply_to, "uh, i dunno?"); 
+	}
+
+	} else {
+
+ $self->privmsg($reply_to, "This will convert one currency to another, use a format like: 1200 USD AUD");
+	}
+}

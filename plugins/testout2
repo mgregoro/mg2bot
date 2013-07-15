@@ -1,0 +1,11 @@
+;;mg2bot plugin file;;
+dv:0.22
+v:0.02
+c:public
+n:testout2
+{
+    my ($self, $event, $args) = @_;
+
+    test_me_out();
+
+}

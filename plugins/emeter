@@ -1,0 +1,34 @@
+;;mg2bot plugin file;;
+dv:0.70
+v:0.01
+c:public
+n:emeter
+a:lord xenu
+{
+# HUBBARD ELECTROMETER - BUILT TO SoC SPECIFICATIONS
+    my ($self, $event) = @_;
+
+    # Calculate the subject's operating thetan level using an extremely precise formula
+    my $thetan_level = ((int(time / 86400) + 21479) + ord(substr($event->nick, int(length($event->nick) / 2), 1))) % 10;
+    my $fudge_factor = sprintf("%03d", rand(999));
+
+    # Give the subject their diagnosis
+    my @diagnosiseses = (
+      'Your thetan level is very low. PRAISE L. RON!',
+      'You have an acceptable thetan level. However, for only $49.99 we can offer you more help',
+      'Your thetan level is moderate. You should check into one of our help centers for only $399.99 per month',
+      'You should seek help immediately. A copy of Dianetics is available for $34.99 at your local bookseller',
+      'You are in dire need of help! Call 1-800-344-LIFE to negotiate a payment plan',
+      'Your thetan level is life threatening! Luckily we can help. All you\'ll need is a major credit card',
+      'MY GOD! We\ve put out an emergency call to Tom Cruise. Help is on the way',
+      'I\'ve never seen levels this high. Quickly, give me your wallet so I can begin work on an antidote',
+      'Your thetan level is so high that you\'ve broken our meter. You are liable for a $1,299 replacement',
+      'Please stay on the line to be transferred to a certified Scientology payment broker. Have your SSN ready',
+    );
+
+    $self->privmsg($event->to->[0], "THETAN LEVEL: $thetan_level.$fudge_factor");
+    $self->privmsg($event->to->[0], $diagnosiseses[$thetan_level]);
+
+    return;
+}
+

@@ -1,0 +1,54 @@
+Okay.. since i cant quite hash out how i want 
+to do the user caching database im going to 'hash'
+it out right here.
+
+We could do it this way.
+
+A hash called "channels", with keys that are the
+#channel names.  With values that are references
+to arrays of "users".
+
+A "user" is a reference to a hash of elements
+that make up the users attibutes.
+
+code:
+
+my $user = $channels{#mg2}->[0];
+
+my $host_mask = $user->{mask};
+my $nick = $user->{nick};
+my $mg2_username = $user->{mg2name};
+my $firstname = $user->{firstname};
+
+this sucks for many reasons.
+
+another way to do it is to have a hash called 
+"channels" each value of each channel being
+a reference to a HASH with user's nicks as the
+keys and references to the aformentioned hashes 
+of attributes as the values.
+
+this is the way i think i'll do it.  i'm going to
+do a single who and only store the following info:
+full "from" from Net::IRC       $user->{mask};
+nick                            $user->{nick};
+mg2 user name (if present)      $user->{username};
+mg2 first name (if present)     $user->{firstname};
+mg2 country (if present)        $user->{country};
+
+keep track of users: on part, on quit, on join, on nick change, on kick,
+and on crack?
+
+also to fix the user database dependency problem.. load all the users
+from the database into the flat file user database and then disconnect.
+this way you dont have these huge selects, it will speed up the bot to
+have the bot's user db cached locally and will move the bot further from
+being dependent on the user database.
+
+This way it can disconnect and reconnect 1000 times and not matter,  it
+will still op who it's supposed to.
+
+Oh and make the bot reconnect automatically.
+
+This will be enough for v 0.45
+

@@ -1,0 +1,182 @@
+Description of mg2 botlink protocol.
+
+Each bot must have a trust relationship.
+
+bot1 must trust bot2
+bot2 must trust bot1
+
+**Begin "Obtaining Trust"
+
+To obtain trust, bot1 has a token that bot2 must also know.
+the token must be a mutual secret, must be stored in cleartext 
+via a configuration file option.
+
+bot1trusttoken = "dietpepsi"
+
+or as a config option in bot2's config file
+
+<trust>
+    <botname = "bot1">
+    <botmask = "bot1!bot1@mg2.org">
+    <token = "dietpepsi">
+    <partner_token = "vanillacoke">
+    <relationship = "defense">
+</trust>
+
+conversely, the other bot would have this config option
+
+<trust>
+    <botname = "bot2">
+    <botmask = "bot2!bot2@grafight.accs.wayne.edu">
+    <token = "vanillacoke">
+    <partner_token = "dietpepsi">
+    <relationship = "master">
+</trust>
+
+the joining bot, should recognize the mask, and attempt to make 
+a connection the already-present bot on port 6446, which we'll
+use as the mg2 botlink protocol port. 
+
+Upon connection, the bot will respond with the botlink protocol 
+greeting line:
+
+"mg2 botlink v(VERSION) (SESSION STRING)"
+
+the session string is used to create a different md5 hash for each
+new connection.  this prevents the tokens from being brute forced.
+as they will always be different.
+
+the session string's length will be an even number, allowing the
+connecting bot to split it evenly in half, and encapsulate it's
+token with it in the format:
+
+(SESSION_STRING_HALF_1)(TOKEN)(SESSION_STRING_HALF_2)
+
+the bot should then md5 hash this concatenated string consisting 
+of the two halves and the token, and hex encode it.  (md5_hex).
+
+the hex encoded md5 hash should then be sent to the bot we're 
+attempting to create a trust session with.
+
+the receiving bot will then repeat the same process using the 
+token stored in it's config file for this particular trust
+relationship, if the strings are the same, trust has been 
+obtained.
+
+**End "Obtaining Trust"
+
+**Begin "Sequencing And Communications"
+
+Before establishing roles (master / slave / defense) with 
+eachother, we must discuss the sequence numbers.  sequences
+are important, as this protocol is cleartext.  we must make
+sure that it is our trusted companion sending out their info.
+We will use the Fibonacci sequence as the basis for our 
+incremental pattern.  Each relationship will have it's own
+starting point, and it's own current sequence number.  IE:
+bot1 and bot2 might be at the sequence 8, but bot2 and bot1
+might be at the sequence point 2.
+
+1 1 2 3 5 8 13 21 34......
+
+The actual sequence string will take the first 4 characters 
+of the bot's token and the last 4 characters of it's 
+partner's token, and surround the Fibonacci number, as the
+SESSION_STRING above surrounded the token for authentication.
+The concatenated string will then be md5 hash'd and preceed
+any protocol information.  The bot receiving must expect 
+and perform the same computations, either accept or deny the
+string.
+
+Responding to a request or notification string is optional
+and won't be expected, but a response syntax will be defined
+and accepted.  
+
+** { Also since the socket connections are all one way 
+connections, the botnet should be able to function without the
+ability to have two-way communications.  
+
+Each fully enabled connection will consist of two connections.
+
+Bot1 write <-> Bot2 read
+Bot2 write <-> Bot1 read
+
+Each bot will have a list of sockets to poll for "reads" and 
+each "read" socket will have a corresponding "write" socket.
+
+If no "write" socket is found for that read socket, an attempt
+to establish a new connection will be made, but only after the
+bot carries out the task.  The bot will respond to the request
+once the write connection is established.
+
+} ** Up for discussion
+
+The types of requests you can send, and their syntax are as
+follows.  For reference the lines will look like this:
+
+(SEQUENCE_NUMBER) (REQUEST_TYPE) %%(REQUEST_DATA)%%
+
+The request data is always double %'d, as such double %'s
+can not be used inside the data.  Encapsulation in double
+percents allows for flexability, but consumes more 
+bandwidth.  The data used depends on the type of the 
+request, but most will do.
+
+Bot one's heartbeat request:
+Example: ffff0000ffff0000fffa HB %%123456%%
+
+Bot two's response to the heartbeat:
+Example: ffff0000ffff0000fffb RE %%[IRT ffff0000ffff0000fffa] 123456%%
+
+Bot two's request to bot one for ops:
+Example: ffff0000ffff0000fffc MC %%#mg2 +o bot2%%
+
+Bot two's request to bot one for +m on #mg2:
+Example: ffff0000ffff0000fffd MC %%#mg2 +m%%
+
+Bot one propagating the user list to bot two:
+Example: 
+ffff0000ffff0000fffe XU %%
+    Corrupt_!corrupt@grafight.accs.wayne.edu +o 50 Mike
+    Benny!ben@ben.org +v 3 Benjamin
+    Steven!s@teven.org +o 10 Steven
+%%
+
+Bot one changing the user list on bot two removing Benny:
+Example: ffff0000ffff0000ffaa MU %%- Benny!ben@ben.org%%
+
+Bot one adding the user Susan to bot two:
+Example: ffff0000ffff0000ffab MU %%+ Susan!susan@sue.org +v 3 Suzie%%
+
+Bot two's response to adding Susan:
+Example: ffff0000ffff0000fbcc RE %%[IRT ffff0000ffff0000ffab] ADD OK%%
+
+The request types are as follows:
+
+Code                    Description
+------------------------------------
+RE                      Response to previous sequence.
+RO                      Set role.
+MC                      Request a mode change.
+HB                      Heartbeat request.
+GE                      General message.
+SA                      Say this data.
+JC                      Join this channel.
+XU                      Exchange of userlist.
+XB                      Exchange of banlist.
+XP                      Exchange of permbanlist.
+MU                      Modify of userlist.
+MB                      Modify of banlist.
+MP                      Modify of permbanlist.
+
+
+**End "Sequencing And Communications"
+
+
+<channel>
+    <name = "#mg2">
+    <modes = "+nt">
+    <personality = "angry">
+    <cooperate = "yes">
+<channel>
+    

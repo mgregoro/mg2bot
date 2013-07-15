@@ -1,0 +1,77 @@
+;;mg2bot plugin file;;
+# $Id: listplugins 249 2007-12-11 16:08:36Z corrupt $
+dv:0.61
+v:0.01
+c:public,private,jabber
+n:listplugins
+s:listplugins <all|loaded>
+p:11
+h:you wanna stay in the kitchen? quit bitchin.
+a:mikey g, mg2bot addon plugin
+{
+    my ($self, $event) = @_;
+
+    my $hdr = $_[$#_]; # the header data is always the last element
+
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    # the arguement can be pulled from the event
+    my ($arg) = $event->args;
+    $arg =~ s/^\S+\s+(.+)$/$1/g;
+
+    # take out the name if it starts with it, for "mg2bot, command" vs "+command"
+    my $name = $hdr->{n};
+    $arg =~ s/^$name //g;
+    my ($self, $event, $args) = @_;
+    my $reply_to;
+    if ($event->to->[0] =~ /^#/) {
+        $reply_to = $event->to->[0];
+    } else {
+        $reply_to = $event->nick;
+    }
+
+    my $get_all_plugins = sub {
+        my @plugins;
+        my $plugins_dir = "$mg2bot_dir/plugins";
+        opendir(PLUGINSDIR, $plugins_dir);
+        while (my $file = readdir(PLUGINSDIR)) {
+            next if $file =~ /^\./;
+            push(@plugins, $file) if -e "$mg2bot_dir/plugins/$file";
+        }
+        closedir(PLUGINSDIR);
+        return (@plugins);
+    };
+
+    my %loaded = list_plugins();
+    my @msg = ();
+
+    if ($arg =~ /all/i) {
+        my @avail = $get_all_plugins->();
+        foreach my $plugin (@avail) {
+            if (exists($loaded{$plugin})) {
+                push(@msg, uc($plugin));
+            } else {
+                push(@msg, $plugin);
+            }
+            if (length(join(', ', @msg)) > 250) {
+                $self->privmsg($reply_to, join(', ', @msg));
+                @msg = ();
+            }
+        }
+    } else {
+        foreach my $plugin (keys %loaded) {
+            push (@msg, $plugin);
+            if (length(join(', ', @msg)) > 250) {
+                $self->privmsg($reply_to, join(', ', @msg));
+                @msg = ();
+            }
+        }
+    }
+
+    $self->privmsg($reply_to, join(', ', @msg));
+}

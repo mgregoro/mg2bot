@@ -1,0 +1,12 @@
+;;mg2bot plugin file;;
+dv:0.30
+v:0.10
+c:public
+n:wake
+{
+    my ($self, $event, $args) = @_;
+    if (($sleeping == 1) && (is_master($event->from))) {
+        $sleeping = 0;
+        $self->privmsg($event->to->[0], "that was a good sleep.");
+    } 
+}

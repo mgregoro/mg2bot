@@ -1,0 +1,63 @@
+
+ this document outlines the new user file format
+
+currently the file in data/users_file has the following format
+username:mask:firstname:level:country:sponsorname:user_profile
+
+this setup has a number of flaws, and really is lacking in quite a few
+areas.  the solution is to move to an xml based user configuration.
+this will allow us to not only keep track of mg2 information such as
+level but also give access to certain parts of the bot, like plugins,
+and administrative features.
+
+below is an example of how the new XML format will look.
+
+this may or may not be the format used, but chances are it will look a
+lot like this.
+
+<?xml version="1.0"?>
+<!-- $Id: new_user_format.txt 166 2004-12-21 11:23:53Z corrupt $ -->
+
+<user>
+    <!-- their mg2 username, or their bot username -->
+    <username>Corrupt</username>
+
+    <!-- their configured hostmask -->
+    <hostmask>Corrupt_!corrupt@im.one.of.the.good.guys</username>
+
+    <!-- their first (given) name -->
+    <givenname>Michael</givenname>
+
+    <!-- their mg2 level (not used for non mg2 bot functions) -->
+    <level>50</level>
+
+    <!-- their country -->
+    <country>USA</country>
+
+    <!-- their sponsorname -->
+    <sponsorname>corrupt</sponsorname>
+
+    <!-- list of the users access privileges.  can use wildcards -->
+    <!-- format: (-)class:action -->
+
+    <!-- gives access to everything -->
+    <access>*</access>
+
+    <!-- gives access to any user related functions -->
+    <access>user:*</access>
+
+    <!-- gives access to the plugins 8ball and plugininfo -->
+    <access>plugins:8ball,plugininfo</access>
+
+    <!-- removes access from any rls functionality -->
+    <access>-rls:*</access>
+</user>
+
+Internally this will be stored as a hash table, much like mg2_users now.
+Except there will be no mg2_masks hash.  As the list of masks can be
+generated when needed from this data structure.
+
+Structure since every attribute can theoretically be multi value except
+user_name, we store the values in an arrayref:
+$mg2_users->{user_name}->{user_data}->[value1, value2, value3]
+
