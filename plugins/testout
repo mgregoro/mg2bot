@@ -9,7 +9,7 @@ n:testout
     test_me_out();
 
     sub test_me_out {
-        print "I'm a fag\n";
+        print "I'm a human\n";
     }
 
 }
